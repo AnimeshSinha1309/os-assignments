@@ -13,8 +13,8 @@ struct String string_make(const char* from);
 struct String string_cut(const char* from, int n);
 
 // Tokenization type operations using single delimeter
-void string_pop_back(struct String str, char delimeter);
-void string_pop_front(struct String str, char delimeter);
+void string_pop_back(struct String* str, char delimeter);
+void string_pop_front(struct String* str, char delimeter);
 struct String string_peek_back(struct String str, char delimeter);
 struct String string_peek_front(struct String str, char delimeter);
 int string_match(struct String str1, struct String str2);

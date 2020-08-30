@@ -5,4 +5,6 @@
 #define MAX_LETTERS_IN_TOKEN 1000
 #define MAX_PATH_LENGTH 1000
 
+typedef int bool;
+
 #endif //ANISHELL_GLOBALS_H

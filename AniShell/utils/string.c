@@ -40,28 +40,39 @@ struct String string_cut(const char* from, int n) {
     return to;
 }
 
+struct String string_empty() {
+    struct String to;
+    to.c_str = "";
+    to.length = 0;
+    return to;
+}
+
 // Tokenization type operations using single delimeter
 
-void string_pop_back(struct String str, char delimeter) {
-    char* pos = strrchr(str.c_str, delimeter);
-    str.length = (int)pos - (int)str.c_str;
+void string_pop_back(struct String* str, char delimeter) {
+    char* pos = strrchr(str->c_str, delimeter);
+    if (pos == NULL) pos = str->c_str + str->length;
+    str->length -= str->length - (int)pos + (int)str->c_str;
     *pos = 0;
 }
 
-void string_pop_front(struct String str, char delimeter) {
-    char* pos = strchr(str.c_str, delimeter);
-    str.length = (int)pos - (int)str.c_str;
-    str.c_str = pos;
+void string_pop_front(struct String* str, char delimeter) {
+    char* pos = strchr(str->c_str, delimeter);
+    if (pos == NULL) pos = str->c_str + str->length; else pos++;
+    str->length -= (int)pos - (int)str->c_str;
+    str->c_str = pos;
 }
 
 struct String string_peek_back(struct String str, char delimeter) {
     char* pos = strchr(str.c_str, delimeter);
+    if (pos == NULL) return str; else pos++;
     int length = str.length - (int)pos + (int)str.c_str;
     return string_cut(pos, length);
 }
 
 struct String string_peek_front(struct String str, char delimeter) {
     char* pos = strchr(str.c_str, delimeter);
+    if (pos == NULL) return str;
     int length = (int)pos - (int)str.c_str;
     return string_cut(str.c_str, length);
 }
