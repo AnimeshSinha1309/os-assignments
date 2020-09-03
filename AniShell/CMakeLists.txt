@@ -9,7 +9,7 @@ add_executable(AniShell main.c
         utils/sysinfo.c utils/sysinfo.h
 
         commands/ls.c commands/ls.h
-        # commands/pinfo.c commands/pinfo.h
+        commands/pinfo.c commands/pinfo.h
         commands/cd.c commands/cd.h
         commands/pwd.c commands/pwd.h
 

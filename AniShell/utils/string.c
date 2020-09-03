@@ -3,15 +3,10 @@
 #include <math.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include "../globals.h"
 
 // Constructors List
-
-String string_read() {
-    String reading;
-    reading.c_str = (char*)calloc(MAX_LETTERS_IN_TOKEN, 1);
-    return reading;
-}
 
 String string_copy(String from) {
     String to;
@@ -39,7 +34,8 @@ String string_cut(const char* from, int n) {
 
 String string_empty() {
     String to;
-    to.c_str = "";
+    to.c_str = (char*)calloc(MAX_LETTERS_IN_TOKEN, 1);
+    to.c_str[0] = '\0';
     to.length = 0;
     return to;
 }
@@ -82,9 +78,17 @@ int string_match(String str1, String str2) {
     return (int)fmin(str1.length, str2.length);
 }
 
+// Other useful operations
+
 String string_join(char* a, char* b) {
     String result = string_make(a);
     result.c_str = strcat(result.c_str, b);
     result.length = strlen(result.c_str);
     return result;
+}
+
+struct String string_itoa(int value) {
+    String result = string_empty();
+    sprintf(result.c_str, "%d", value);
+    result.length = strlen(result.c_str);
 }

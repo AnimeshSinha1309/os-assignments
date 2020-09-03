@@ -1,11 +1,11 @@
 #include "parser.h"
 
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
 #include "../globals.h"
 #include "../utils/string.h"
 #include "../commands/cd.h"
+#include "../commands/pinfo.h"
 #include "../commands/pwd.h"
 #include "../commands/ls.h"
 #include "../commands/execvp.h"
@@ -34,19 +34,24 @@ void process_input(struct String input) {
         string_pop_front(&input, ' ');
         pwd(string_peek_front(input, ' '));
         printf("\n");
+    } else if (shift_matches("pinfo", input)) {
+        string_pop_front(&input, ' ');
+        if (input.length == 0) pinfo(string_empty());
+        else pwd(string_peek_front(input, ' '));
+        printf("\n");
     } else if (shift_matches("ls", input)) {
-        bool l = 0, a = 0;
+        bool l = false, a = false;
         string_pop_front(&input, ' ');
         Strmat args = tokenize_args(input);
         for (int i = 0; i < args.length; i++) {
             if (args.lengths[i] > 0 && args.c_arr[i][0] == '-') {
                 for (int j = 1; j < args.lengths[i]; j++) {
-                    if (args.c_arr[i][j] == 'l') l = 1;
-                    if (args.c_arr[i][j] == 'a') a = 1;
+                    if (args.c_arr[i][j] == 'l') l = true;
+                    if (args.c_arr[i][j] == 'a') a = true;
                 }
             }
         }
-        int printed_something = false;
+        bool printed_something = false;
         for (int i = 0; i < args.length; i++) {
             if (args.lengths[i] > 0 && args.c_arr[i][0] != '-') {
                 ls(string_cut(args.c_arr[i], args.lengths[i]), a, l);
