@@ -23,5 +23,8 @@ struct String sys_pwd() {
 }
 
 void pwd() {
-    printf("%s", sys_pwd().c_str);
+    struct String current_path;
+    current_path.c_str = (char*)calloc(MAX_PATH_LENGTH, 1);
+    getcwd(current_path.c_str, MAX_PATH_LENGTH);
+    printf("%s", current_path.c_str);
 }

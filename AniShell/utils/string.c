@@ -1,12 +1,9 @@
+#include "string.h"
+
 #include <math.h>
 #include <string.h>
 #include <stdlib.h>
 #include "../globals.h"
-
-struct String {
-    char* c_str;
-    int length;
-};
 
 // Constructors List
 
@@ -47,31 +44,31 @@ struct String string_empty() {
     return to;
 }
 
-// Tokenization type operations using single delimeter
+// Tokenization type operations using single delimiter
 
-void string_pop_back(struct String* str, char delimeter) {
-    char* pos = strrchr(str->c_str, delimeter);
+void string_pop_back(struct String* str, char delimiter) {
+    char* pos = strrchr(str->c_str, delimiter);
     if (pos == NULL) pos = str->c_str + str->length;
     str->length -= str->length - (int)pos + (int)str->c_str;
     *pos = 0;
 }
 
-void string_pop_front(struct String* str, char delimeter) {
-    char* pos = strchr(str->c_str, delimeter);
+void string_pop_front(struct String* str, char delimiter) {
+    char* pos = strchr(str->c_str, delimiter);
     if (pos == NULL) pos = str->c_str + str->length; else pos++;
     str->length -= (int)pos - (int)str->c_str;
     str->c_str = pos;
 }
 
-struct String string_peek_back(struct String str, char delimeter) {
-    char* pos = strchr(str.c_str, delimeter);
+struct String string_peek_back(struct String str, char delimiter) {
+    char* pos = strchr(str.c_str, delimiter);
     if (pos == NULL) return str; else pos++;
     int length = str.length - (int)pos + (int)str.c_str;
     return string_cut(pos, length);
 }
 
-struct String string_peek_front(struct String str, char delimeter) {
-    char* pos = strchr(str.c_str, delimeter);
+struct String string_peek_front(struct String str, char delimiter) {
+    char* pos = strchr(str.c_str, delimiter);
     if (pos == NULL) return str;
     int length = (int)pos - (int)str.c_str;
     return string_cut(str.c_str, length);
