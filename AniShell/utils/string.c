@@ -91,4 +91,5 @@ struct String string_itoa(int value) {
     String result = string_empty();
     sprintf(result.c_str, "%d", value);
     result.length = strlen(result.c_str);
+    return result;
 }

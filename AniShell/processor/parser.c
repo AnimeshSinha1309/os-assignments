@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "../globals.h"
 #include "../utils/string.h"
 #include "../commands/cd.h"
@@ -37,7 +38,7 @@ void process_input(struct String input) {
     } else if (shift_matches("pinfo", input)) {
         string_pop_front(&input, ' ');
         if (input.length == 0) pinfo(string_empty());
-        else pwd(string_peek_front(input, ' '));
+        else pinfo(string_peek_front(input, ' '));
         printf("\n");
     } else if (shift_matches("ls", input)) {
         bool l = false, a = false;
@@ -60,7 +61,9 @@ void process_input(struct String input) {
         }
         if (!printed_something) ls(string_make("~"), a, l);
     } else {
+        char* bg_marker = strchr(input.c_str, '&');
+        if (bg_marker != NULL) { input.length = (int)bg_marker - (int)input.c_str; *bg_marker = '\0'; }
         Strmat args = tokenize_args(input);
-        exec(string_peek_front(input, ' ').c_str, args.c_arr, 0);
+        exec(string_peek_front(input, ' ').c_str, args.c_arr, bg_marker != NULL);
     }
 }
