@@ -8,6 +8,6 @@
 #include "../utils/string.h"
 #include "../globals.h"
 
-void ls(struct String directory, bool flag_a, bool flag_l);
+void ls(String directory, bool flag_a, bool flag_l);
 
 #endif //ANISHELL_LS_H

@@ -11,6 +11,10 @@
 #include <time.h>
 #include <unistd.h>
 
+#include "../commands/pwd.h"
+#include "../commands/cd.h"
+#include "../processor/tokenizer.h"
+
 static int directory_sort(const struct dirent** a, const struct dirent** b) {
     const char *name_a = (*a)->d_name, *name_b = (*b)->d_name;
     if (*name_a == '.')
@@ -75,11 +79,14 @@ void func_l(const char **files_list, int files_count, int flag_a) {
 }
 #pragma clang diagnostic pop
 
-void ls(struct String directory, int flag_a, int flag_l) {
+void ls(String directory, int flag_a, int flag_l) {
+    String original_pwd = sys_pwd();
+
     const char* output[1000];
     int list_length;
     struct dirent** files_list;
-    list_length = scandir(directory.c_str, &files_list, directory_filter, directory_sort);
+    String dir_string = process_path(directory);
+    list_length = scandir(dir_string.c_str, &files_list, directory_filter, directory_sort);
     if (list_length == -1) {
         perror("Scan-Dir Failed.");
         exit(EXIT_FAILURE);
@@ -89,7 +96,7 @@ void ls(struct String directory, int flag_a, int flag_l) {
     }
     struct stat s;
     lstat(directory.c_str, &s);
-    chdir(directory.c_str);
+    cd(directory);
 
     if (flag_l) {
         func_l(output, list_length, flag_a);
@@ -100,4 +107,6 @@ void ls(struct String directory, int flag_a, int flag_l) {
             printf("%s\n", output[i]);
         }
     }
+
+    cd(original_pwd);
 }

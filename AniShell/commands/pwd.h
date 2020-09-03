@@ -5,8 +5,11 @@
 #ifndef ANISHELL_PWD_H
 #define ANISHELL_PWD_H
 
+#include "../utils/string.h"
+#include "../globals.h"
+
 void pwd();
 
-struct String sys_pwd();
+String sys_pwd();
 
 #endif //ANISHELL_PWD_H

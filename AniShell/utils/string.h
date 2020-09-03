@@ -19,4 +19,7 @@ struct String string_peek_back(struct String str, char delimeter);
 struct String string_peek_front(struct String str, char delimeter);
 int string_match(struct String str1, struct String str2);
 
+// Other useful operations
+struct String string_join(char* a, char* b);
+
 #endif //ANISHELL_STRING_H

@@ -49,11 +49,11 @@ void process_input(struct String input) {
         int printed_something = false;
         for (int i = 0; i < args.length; i++) {
             if (args.lengths[i] > 0 && args.c_arr[i][0] != '-') {
-                ls(process_path(string_cut(args.c_arr[i], args.lengths[i])), a, l);
+                ls(string_cut(args.c_arr[i], args.lengths[i]), a, l);
                 printed_something = true;
             }
         }
-        if (!printed_something) ls(process_path(string_make("~")), a, l);
+        if (!printed_something) ls(string_make("~"), a, l);
     } else {
         Strmat args = tokenize_args(input);
         exec(string_peek_front(input, ' ').c_str, args.c_arr, 0);
