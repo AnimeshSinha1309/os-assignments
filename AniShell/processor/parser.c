@@ -64,6 +64,7 @@ void process_input(struct String input) {
         char* bg_marker = strchr(input.c_str, '&');
         if (bg_marker != NULL) { input.length = (int)bg_marker - (int)input.c_str; *bg_marker = '\0'; }
         Strmat args = tokenize_args(input);
-        exec(string_peek_front(input, ' ').c_str, args.c_arr, bg_marker != NULL);
+        if (string_peek_front(input, ' ').length > 1)
+            exec(string_peek_front(input, ' ').c_str, args.c_arr, bg_marker != NULL);
     }
 }

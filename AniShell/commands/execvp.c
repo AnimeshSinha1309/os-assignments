@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include "../utils/terminate.h"
 
 void exec(char* command, char** args, bool background) {
     int child = fork();
@@ -14,6 +15,7 @@ void exec(char* command, char** args, bool background) {
     } else if (child == 0) {
         // If I am the child, I execute
         setpgid(0, 0);
+        process_name = command;
         if (execvp(command, args) < 0)
             perror("System Command Execution Terminated Unexpectedly");
         exit(0);
