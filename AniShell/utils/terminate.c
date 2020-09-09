@@ -3,7 +3,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/wait.h>
-#include "../processor/prompt.h"
 
 void setup_exit() {
     signal(SIGCHLD, exit_status);

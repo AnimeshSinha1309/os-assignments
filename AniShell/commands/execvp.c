@@ -8,6 +8,7 @@
 #include "../utils/terminate.h"
 
 void exec(char* command, char** args, bool background) {
+    process_name = command;
     int child = fork();
 
     if (child == -1) {

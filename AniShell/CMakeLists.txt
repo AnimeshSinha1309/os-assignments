@@ -15,6 +15,6 @@ add_executable(AniShell main.c
         processor/prompt.c processor/prompt.h
         processor/parser.c processor/parser.h
         processor/tokenizer.c processor/tokenizer.h
-        globals.h utils/terminate.c utils/terminate.h)
+        globals.h utils/terminate.c utils/terminate.h commands/history.c commands/history.h commands/echo.c commands/echo.h)
 
 target_link_libraries(AniShell m)

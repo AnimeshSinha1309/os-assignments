@@ -11,6 +11,8 @@
 #include "../commands/ls.h"
 #include "../commands/execvp.h"
 #include "../processor/tokenizer.h"
+#include "../commands/echo.h"
+#include "../commands/history.h"
 
 
 void await_input() {
@@ -28,9 +30,16 @@ bool shift_matches(const char* command, struct String input) {
 }
 
 void process_input(struct String input) {
+    write_history(input);
     if (shift_matches("cd", input)) {
         string_pop_front(&input, ' ');
         cd(string_peek_front(input, ' '));
+    } else if (shift_matches("echo", input)) {
+        string_pop_front(&input, ' ');
+        echo(input);
+        printf("\n");
+    } else if (shift_matches("history", input)) {
+        history();
     } else if (shift_matches("pwd", input)) {
         string_pop_front(&input, ' ');
         pwd(string_peek_front(input, ' '));
