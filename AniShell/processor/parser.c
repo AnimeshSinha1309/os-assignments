@@ -47,6 +47,8 @@ void process_input(String input) {
     if (shift_matches("cd", input)) {
         string_pop_front(&input, ' ');
         cd(string_peek_front(input, ' '));
+    } else if (shift_matches("exit", input)) {
+        exit(0);
     } else if (shift_matches("echo", input)) {
         string_pop_front(&input, ' ');
         echo(input);
