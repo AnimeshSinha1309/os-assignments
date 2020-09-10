@@ -24,13 +24,23 @@ void await_input() {
     process_input(string_make(com_value));
 }
 
-bool shift_matches(const char* command, struct String input) {
+bool shift_matches(const char* command, String input) {
     struct String com = string_make(command);
     int match = string_match(com, input);
     return (match == com.length && (input.length == com.length || input.c_str[com.length] == ' '));
 }
 
-void process_input(struct String input) {
+String clean_input(String input) {
+    String output = string_empty();
+    for (int i = 0; i < input.length; i++) {
+        if (input.c_str[i] != ' ' || (output.length != 0 && output.c_str[output.length - 1] != ' '))
+            output.c_str[output.length++] = input.c_str[i];
+    }
+    return output;
+}
+
+void process_input(String input) {
+    input = clean_input(input);
     write_history(input);
     if (shift_matches("cd", input)) {
         string_pop_front(&input, ' ');

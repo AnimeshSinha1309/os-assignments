@@ -1,25 +1,25 @@
 cmake_minimum_required(VERSION 3.16)
-project(AniShell C)
+project(anishell C)
 
 set(CMAKE_C_STANDARD 11)
 
-add_executable(AniShell main.c
+add_executable(anishell main.c
         utils/string.c utils/string.h
-        utils/sysinfo.c utils/sysinfo.h
         utils/strmat.c utils/strmat.h
-        utils/terminate.c utils/terminate.h
         utils/io.c utils/io.h
-        commands/history.c commands/history.h
+        utils/sysinfo.c utils/sysinfo.h
+        utils/terminate.c utils/terminate.h
+        commands/cd.c commands/cd.h
         commands/echo.c commands/echo.h
-        commands/nightswatch.c commands/nightswatch.h
+        commands/pwd.c commands/pwd.h
         commands/ls.c commands/ls.h
         commands/pinfo.c commands/pinfo.h
-        commands/cd.c commands/cd.h
-        commands/pwd.c commands/pwd.h
         commands/execvp.c commands/execvp.h
+        commands/history.c commands/history.h
+        commands/nightswatch.c commands/nightswatch.h
         processor/prompt.c processor/prompt.h
         processor/parser.c processor/parser.h
         processor/tokenizer.c processor/tokenizer.h
         globals.h)
 
-target_link_libraries(AniShell m)
+target_link_libraries(anishell m)
