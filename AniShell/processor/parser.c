@@ -39,6 +39,8 @@ String clean_input(String input) {
     return output;
 }
 
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "cppcoreguidelines-narrowing-conversions"
 void process_input(String input) {
     input = clean_input(input);
     write_history(input);
@@ -50,7 +52,11 @@ void process_input(String input) {
         echo(input);
         printf("\n");
     } else if (shift_matches("history", input)) {
-        history();
+        string_pop_front(&input, ' ');
+        if (input.length == 0)
+            history(HISTORY_PRINT_DEFAULT);
+        else
+            history(strtol(string_peek_front(input, ' ').c_str, NULL, 10));
     } else if (shift_matches("nightswatch", input)) {
         string_pop_front(&input, ' ');
         string_pop_front(&input, ' ');
@@ -95,3 +101,4 @@ void process_input(String input) {
             exec(string_peek_front(input, ' ').c_str, args.c_arr, bg_marker != NULL);
     }
 }
+#pragma clang diagnostic pop

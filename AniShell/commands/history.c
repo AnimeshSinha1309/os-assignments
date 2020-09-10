@@ -5,28 +5,45 @@
 #include "../processor/prompt.h"
 #include "../utils/strmat.h"
 
-Strmat history_buffer;
-
 void write_history(String str) {
-    char* f_path = string_join(home_path.c_str, "/history.txt").c_str;
-    FILE* f_ptr = fopen(f_path, "a");
-    if (f_ptr < 0) {
-        perror("Could not read from history file.");
-        return;
-    }
-    fputs(string_join(str.c_str, "\n").c_str, f_ptr);
-    fclose(f_ptr);
+    if (str.length <= 1) return;
+    Strmat history_memory = load_history();
+    strmat_put(&history_memory, string_join(str.c_str, "\n").c_str);
+    save_history(history_memory);
 }
 
-void history() {
+Strmat load_history() {
     char buffer[MAX_TOKENS_IN_COMMAND];
     char* f_path = string_join(home_path.c_str, "/history.txt").c_str;
     FILE* f_ptr = fopen(f_path, "r");
+    Strmat history_memory = strmat_empty();
     if (f_ptr < 0) {
         perror("Could not read from history file.");
-        return;
+        return strmat_empty();
     }
     while(fgets(buffer, MAX_TOKENS_IN_COMMAND, f_ptr))
-        printf("%s", buffer);
+        strmat_put(&history_memory, buffer);
     fclose(f_ptr);
+    return history_memory;
+}
+
+void save_history(Strmat history_memory) {
+    char* f_path = string_join(home_path.c_str, "/history.txt").c_str;
+    FILE* f_ptr = fopen(f_path, "w");
+    if (f_ptr < 0) {
+        perror("Could not write to history file.");
+        return;
+    }
+    int start = history_memory.length > HISTORY_STORAGE_SIZE ? history_memory.length - HISTORY_STORAGE_SIZE : 0;
+    for (int i = start; i < history_memory.length; i++) {
+        fputs(history_memory.c_arr[i], f_ptr);
+    }
+    fclose(f_ptr);
+}
+
+void history(int items) {
+    Strmat history_memory = load_history();
+    for (int i = history_memory.length - items; i < history_memory.length; i++) {
+        printf("%s", history_memory.c_arr[i]);
+    }
 }
