@@ -22,6 +22,7 @@ void exec(char* command, char** args, bool background) {
         exit(0);
     } else {
         // If I am the parent, I wait
+        // Section directly copied from a stack-overflow answer, somehow works!
         if (!background) {
             signal(SIGTTIN, SIG_IGN);
             signal(SIGTTOU, SIG_IGN);

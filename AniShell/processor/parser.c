@@ -13,6 +13,7 @@
 #include "../processor/tokenizer.h"
 #include "../commands/echo.h"
 #include "../commands/history.h"
+#include "../commands/nightswatch.h"
 
 
 void await_input() {
@@ -40,6 +41,13 @@ void process_input(struct String input) {
         printf("\n");
     } else if (shift_matches("history", input)) {
         history();
+    } else if (shift_matches("nightswatch", input)) {
+        string_pop_front(&input, ' ');
+        string_pop_front(&input, ' ');
+        int interval = (int)strtol(string_peek_front(input, ' ').c_str, NULL, 10);
+        string_pop_front(&input, ' ');
+        bool cpu_mode = shift_matches("interrupt", input);
+        nightswatch(cpu_mode, interval);
     } else if (shift_matches("pwd", input)) {
         string_pop_front(&input, ' ');
         pwd(string_peek_front(input, ' '));

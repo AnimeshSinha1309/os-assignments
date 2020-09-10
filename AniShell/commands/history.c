@@ -3,7 +3,9 @@
 #include <bits/types/FILE.h>
 #include <stdio.h>
 #include "../processor/prompt.h"
+#include "../utils/strmat.h"
 
+Strmat history_buffer;
 
 void write_history(String str) {
     char* f_path = string_join(home_path.c_str, "/history.txt").c_str;
