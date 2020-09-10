@@ -9,8 +9,8 @@
 
 Strmat strmat_empty() {
     struct Strmat matrix;
-    matrix.c_arr = (char**)calloc(MAX_TOKENS_IN_COMMAND, 4);
-    matrix.lengths = (int*)calloc(MAX_TOKENS_IN_COMMAND, 4);
+    matrix.c_arr = (char**)calloc(MAX_TOKENS_IN_COMMAND, sizeof(char*));
+    matrix.lengths = (int*)calloc(MAX_TOKENS_IN_COMMAND, sizeof(int));
     for (int i = 0; i < MAX_TOKENS_IN_COMMAND; i++) {
         matrix.c_arr[i] = NULL;
         matrix.lengths[i] = 0;
