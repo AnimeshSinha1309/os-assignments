@@ -9,4 +9,6 @@
 
 void pipeline(String input);
 
+void redirections(String input);
+
 #endif //ANISHELL_PIPELINE_H

@@ -21,6 +21,7 @@ void await_input() {
     while ((com_value[com_length++] = (char)getchar()) != '\n');
     com_value[com_length - 1] = 0;
     pipeline(string_make(com_value));
+    free(com_value);
 }
 
 bool shift_matches(const char* command, String input) {
