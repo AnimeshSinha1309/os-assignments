@@ -20,6 +20,6 @@ add_executable(anishell main.c
         processor/prompt.c processor/prompt.h
         processor/parser.c processor/parser.h
         processor/tokenizer.c processor/tokenizer.h
-        globals.h)
+        globals.h processor/pipeline.c processor/pipeline.h)
 
 target_link_libraries(anishell m)

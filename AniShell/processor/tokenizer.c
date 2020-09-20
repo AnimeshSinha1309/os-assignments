@@ -5,10 +5,20 @@
 
 Strmat tokenize_args(String input) {
     Strmat result = strmat_empty();
-    char* pointer = strtok(input.c_str, " ");
+    char *pointer = strtok(input.c_str, " ");
     while (pointer != NULL) {
         strmat_put(&result, pointer);
         pointer = strtok(NULL, " ");
+    }
+    return result;
+}
+
+Strmat tokenize_str(String input, char *delimeter) {
+    Strmat result = strmat_empty();
+    char *pointer = strtok(input.c_str, delimeter);
+    while (pointer != NULL) {
+        strmat_put(&result, pointer);
+        pointer = strtok(NULL, delimeter);
     }
     return result;
 }

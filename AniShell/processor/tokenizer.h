@@ -6,6 +6,9 @@
 #include "../globals.h"
 
 Strmat tokenize_args(String input);
+
+Strmat tokenize_str(String input, char *delimeter);
+
 String process_path(String input);
 
 #endif //ANISHELL_TOKENIZER_H

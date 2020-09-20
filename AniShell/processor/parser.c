@@ -3,8 +3,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../globals.h"
-#include "../utils/string.h"
 #include "../commands/cd.h"
 #include "../commands/pinfo.h"
 #include "../commands/pwd.h"
@@ -14,6 +12,7 @@
 #include "../commands/echo.h"
 #include "../commands/history.h"
 #include "../commands/nightswatch.h"
+#include "pipeline.h"
 
 
 void await_input() {
@@ -21,7 +20,7 @@ void await_input() {
     int com_length = 0;
     while ((com_value[com_length++] = (char)getchar()) != '\n');
     com_value[com_length - 1] = 0;
-    process_input(string_make(com_value));
+    pipeline(string_make(com_value));
 }
 
 bool shift_matches(const char* command, String input) {
@@ -47,8 +46,6 @@ void process_input(String input) {
     if (shift_matches("cd", input)) {
         string_pop_front(&input, ' ');
         cd(string_peek_front(input, ' '));
-    } else if (shift_matches("exit", input)) {
-        exit(0);
     } else if (shift_matches("echo", input)) {
         string_pop_front(&input, ' ');
         echo(input);
