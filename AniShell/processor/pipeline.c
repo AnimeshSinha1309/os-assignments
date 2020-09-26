@@ -12,6 +12,10 @@ void pipeline(String input) {
     int *buffer_1 = calloc(2, sizeof(int)), *buffer_2 = calloc(2, sizeof(int));
     Strmat commands = tokenize_str(input, "|");
     const int BUFFER_INPUT = 0, BUFFER_OUTPUT = 1;
+    if (commands.length == 1) {
+        redirections(strmat_get(commands, 0));
+        return;
+    }
     for (int i = 0; i < commands.length; i++) {
         int *current_buffer = i % 2 == 0 ? buffer_1 : buffer_2, *other_buffer = i % 2 == 0 ? buffer_2 : buffer_1;
         if (pipe(current_buffer) < 0) {
@@ -67,7 +71,7 @@ void redirections(String input) {
     if (len_in != 0) {
         fd_1 = open(file_in, O_RDONLY, 0644);
         if (fd_1 < 0) {
-            perror("Opening < file");
+            perror("Could not open Input file");
             return;
         }
         dup2(fd_1, STDIN_FILENO);
@@ -76,7 +80,7 @@ void redirections(String input) {
         unsigned int open_mode = (append_mode ? O_APPEND : O_TRUNC);
         fd_2 = open(file_out, O_CREAT | O_WRONLY | open_mode, 0644);
         if (fd_2 < 0) {
-            perror("Opening > file");
+            perror("Could not open Output file");
             return;
         }
         dup2(fd_2, STDOUT_FILENO);

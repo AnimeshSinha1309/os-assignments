@@ -13,6 +13,7 @@
 #include "../commands/history.h"
 #include "../commands/nightswatch.h"
 #include "pipeline.h"
+#include "../commands/syscom.h"
 
 
 void await_input() {
@@ -47,6 +48,8 @@ void process_input(String input) {
     if (shift_matches("cd", input)) {
         string_pop_front(&input, ' ');
         cd(string_peek_front(input, ' '));
+    } else if (shift_matches("quit", input)) {
+        exit(0);
     } else if (shift_matches("echo", input)) {
         string_pop_front(&input, ' ');
         echo(input);
@@ -92,10 +95,41 @@ void process_input(String input) {
                 printed_something = true;
             }
         }
-        if (!printed_something) ls(string_make("~"), a, l);
+        if (!printed_something) ls(string_make("."), a, l);
+    } else if (shift_matches("setenv", input)) {
+        string_pop_front(&input, ' ');
+        String var = string_peek_front(input, ' ');
+        string_pop_front(&input, ' ');
+        String val = string_peek_front(input, ' ');
+        setenvr(var, val);
+    } else if (shift_matches("unsetenv", input)) {
+        string_pop_front(&input, ' ');
+        String var = string_peek_front(input, ' ');
+        unsetenvr(var);
+    } else if (shift_matches("jobs", input)) {
+        jobs();
+    } else if (shift_matches("kjob", input)) {
+        string_pop_front(&input, ' ');
+        String pid = string_peek_front(input, ' ');
+        string_pop_front(&input, ' ');
+        String signal = string_peek_front(input, ' ');
+        kjob(strtol(pid.c_str, NULL, 10), strtol(signal.c_str, NULL, 10));
+    } else if (shift_matches("overkill", input)) {
+        overkill();
+    } else if (shift_matches("bg", input)) {
+        string_pop_front(&input, ' ');
+        String pid = string_peek_front(input, ' ');
+        bg(strtol(pid.c_str, NULL, 10));
+    } else if (shift_matches("fg", input)) {
+        string_pop_front(&input, ' ');
+        String pid = string_peek_front(input, ' ');
+        fg(strtol(pid.c_str, NULL, 10));
     } else {
-        char* bg_marker = strchr(input.c_str, '&');
-        if (bg_marker != NULL) { input.length = (int)bg_marker - (int)input.c_str; *bg_marker = '\0'; }
+        char *bg_marker = strchr(input.c_str, '&');
+        if (bg_marker != NULL) {
+            input.length = (int) bg_marker - (int) input.c_str;
+            *bg_marker = '\0';
+        }
         Strmat args = tokenize_args(input);
         if (string_peek_front(input, ' ').length > 1)
             exec(string_peek_front(input, ' ').c_str, args.c_arr, bg_marker != NULL);

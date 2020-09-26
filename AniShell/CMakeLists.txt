@@ -17,9 +17,11 @@ add_executable(anishell main.c
         commands/execvp.c commands/execvp.h
         commands/history.c commands/history.h
         commands/nightswatch.c commands/nightswatch.h
+        commands/syscom.c commands/syscom.h
         processor/prompt.c processor/prompt.h
         processor/parser.c processor/parser.h
         processor/tokenizer.c processor/tokenizer.h
-        globals.h processor/pipeline.c processor/pipeline.h)
+        processor/pipeline.c processor/pipeline.h
+        globals.h utils/joblist.c utils/joblist.h)
 
 target_link_libraries(anishell m)

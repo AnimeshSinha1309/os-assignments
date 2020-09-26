@@ -6,6 +6,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include "../utils/terminate.h"
+#include "../utils/joblist.h"
 
 void exec(char* command, char** args, bool background) {
     process_name = command;
@@ -21,6 +22,7 @@ void exec(char* command, char** args, bool background) {
             perror("System Command Execution Terminated Unexpectedly");
         exit(0);
     } else {
+        jobs_push(string_make(command), child);
         // If I am the parent, I wait
         // Section directly copied from a stack-overflow answer, somehow works!
         if (!background) {

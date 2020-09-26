@@ -6,4 +6,6 @@
 
 void pinfo(String pid);
 
+char *pstatus(char *pid);
+
 #endif //ANISHELL_PINFO_H

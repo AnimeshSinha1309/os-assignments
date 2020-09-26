@@ -8,6 +8,8 @@
 #define HISTORY_STORAGE_SIZE 20
 #define HISTORY_PRINT_DEFAULT 10
 
+#define MAX_JOBS 100
+
 #define true 1
 #define false 0
 
