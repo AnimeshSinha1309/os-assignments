@@ -10,12 +10,18 @@
 #include "pinfo.h"
 
 void setenvr(String var, String value) {
-    String equal_sign = string_make("=");
-    putenv(string_join(var.c_str, string_join(equal_sign.c_str, value.c_str).c_str).c_str);
+    String command = string_join(var.c_str, string_join("=", value.c_str).c_str);
+    putenv(command.c_str);
 }
 
 void unsetenvr(String var) {
     unsetenv(var.c_str);
+}
+
+void getenvr(String var) {
+    char* res = getenv(var.c_str);
+    if (res == NULL) return;
+    printf("%s\n", res);
 }
 
 void jobs() {
@@ -43,7 +49,8 @@ void overkill() {
 }
 
 void bg(int idx) {
-    if (idx > job_count || idx <= 0) {
+    idx--;
+    if (idx >= job_count || idx < 0) {
         perror("Job ID is out of range or not has been removed");
         return;
     }
@@ -52,7 +59,8 @@ void bg(int idx) {
 }
 
 void fg(int idx) {
-    if (idx > job_count || idx <= 0) {
+    idx--;
+    if (idx >= job_count || idx < 0) {
         perror("Job ID is out of range or not has been removed");
         return;
     }
@@ -67,6 +75,5 @@ void fg(int idx) {
     tcsetpgrp(0, getpgrp());
     signal(SIGTTIN, SIG_DFL);
     signal(SIGTTOU, SIG_DFL);
-    job_list[idx].fg = true;
-
+    job_list[idx].del = true;
 }

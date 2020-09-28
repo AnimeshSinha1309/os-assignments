@@ -106,6 +106,10 @@ void process_input(String input) {
         string_pop_front(&input, ' ');
         String var = string_peek_front(input, ' ');
         unsetenvr(var);
+    } else if (shift_matches("getenv", input)) {
+        string_pop_front(&input, ' ');
+        String var = string_peek_front(input, ' ');
+        getenvr(var);
     } else if (shift_matches("jobs", input)) {
         jobs();
     } else if (shift_matches("kjob", input)) {

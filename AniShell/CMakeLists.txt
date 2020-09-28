@@ -22,6 +22,6 @@ add_executable(anishell main.c
         processor/parser.c processor/parser.h
         processor/tokenizer.c processor/tokenizer.h
         processor/pipeline.c processor/pipeline.h
-        globals.h utils/joblist.c utils/joblist.h)
+        globals.h utils/joblist.c utils/joblist.h processor/signal.c processor/signal.h)
 
 target_link_libraries(anishell m)

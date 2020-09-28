@@ -5,17 +5,14 @@
 #include "../globals.h"
 
 void setenvr(String var, String value);
-
 void unsetenvr(String var);
+void getenvr(String var);
 
 void jobs();
-
 void kjob(int pid, int signal);
-
 void overkill();
 
 void bg(int pid);
-
 void fg(int pid);
 
 
