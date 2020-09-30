@@ -5,6 +5,7 @@
 
 struct String home_path;
 struct String prev_path;
+int exit_code;
 
 void prompt_init();
 void prompt_print();

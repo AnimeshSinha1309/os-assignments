@@ -9,6 +9,7 @@
 #include "../utils/sysinfo.h"
 
 void prompt_init() {
+    exit_code = 0;
     // Home for all relative paths
     home_path.c_str = (char*)calloc(MAX_PATH_LENGTH, 1);
     getcwd(home_path.c_str, MAX_PATH_LENGTH);
@@ -20,6 +21,11 @@ void prompt_init() {
 }
 
 void prompt_print() {
-    printf("<%s@%s:%s> ", sys_username().c_str, sys_machinename().c_str, sys_pwd().c_str);
+    printf(":%c <%s@%s:%s> ",
+            exit_code == 0 ? ')' : '(',
+            sys_username().c_str,
+            sys_machinename().c_str,
+            sys_pwd().c_str);
     fflush(stdout);
+    exit_code = 0;
 }

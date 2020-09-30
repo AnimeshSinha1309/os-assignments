@@ -17,7 +17,10 @@ Strmat load_history() {
     char* f_path = string_join(home_path.c_str, "/history.txt").c_str;
     FILE* f_ptr = fopen(f_path, "r");
     Strmat history_memory = strmat_empty();
-    if (f_ptr == NULL) return history_memory;
+    if (f_ptr == NULL) {
+        exit_code = 1;
+        return history_memory;
+    }
     while(fgets(buffer, MAX_TOKENS_IN_COMMAND, f_ptr))
         strmat_put(&history_memory, buffer);
     fclose(f_ptr);
@@ -29,6 +32,7 @@ void save_history(Strmat history_memory) {
     FILE* f_ptr = fopen(f_path, "w");
     if (f_ptr < 0) {
         perror("Could not write to history file.");
+        exit_code = 1;
         return;
     }
     int start = history_memory.length > HISTORY_STORAGE_SIZE ? history_memory.length - HISTORY_STORAGE_SIZE : 0;

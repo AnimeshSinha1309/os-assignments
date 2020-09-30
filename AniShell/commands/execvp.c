@@ -8,6 +8,7 @@
 #include "../utils/terminate.h"
 #include "../utils/joblist.h"
 #include "../processor/signal.h"
+#include "../processor/prompt.h"
 
 void exec(char* command, char** args, bool background) {
     process_name = command;
@@ -19,25 +20,28 @@ void exec(char* command, char** args, bool background) {
         // If I am the child, I execute
         setpgid(0, 0);
         process_name = command;
-        if (execvp(command, args) < 0)
+        if (execvp(command, args) < 0) {
             perror("System Command Execution Terminated Unexpectedly");
+            exit(1);
+        }
         exit(0);
     } else {
         jobs_push(string_make(command), child);
         // If I am the parent, I wait
         // Section directly copied from a stack-overflow answer, somehow works!
         if (!background) {
+            current_process = child;
             signal(SIGTTIN, SIG_IGN);
             signal(SIGTTOU, SIG_IGN);
             setpgid(child, 0);
             tcsetpgrp(0, __getpgid(child));
             int status;
             waitpid(child, &status, WUNTRACED);
+            exit_code = status;
             tcsetpgrp(0, getpgrp());
             signal(SIGTTIN, SIG_DFL);
             signal(SIGTTOU, SIG_DFL);
         } else {
-            current_process = child;
             setpgid(child, 0);
             tcsetpgrp(0, getpgrp());
         }

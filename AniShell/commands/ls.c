@@ -14,6 +14,7 @@
 #include "../commands/pwd.h"
 #include "../commands/cd.h"
 #include "../processor/tokenizer.h"
+#include "../processor/prompt.h"
 
 static int directory_sort(const struct dirent** a, const struct dirent** b) {
     const char *name_a = (*a)->d_name, *name_b = (*b)->d_name;
@@ -89,7 +90,8 @@ void ls(String directory, int flag_a, int flag_l) {
     list_length = scandir(dir_string.c_str, &files_list, directory_filter, directory_sort);
     if (list_length == -1) {
         perror("Scan-Dir Failed.");
-        exit(EXIT_FAILURE);
+        exit_code = 1;
+        return;
     }
     for (int i = 0; i < list_length; i++) {
         output[i] = files_list[i]->d_name;

@@ -9,6 +9,7 @@
 #include "../utils/joblist.h"
 #include "pinfo.h"
 #include "../processor/signal.h"
+#include "../processor/prompt.h"
 
 
 void setenvr(String var, String value) {
@@ -41,6 +42,7 @@ void jobs() {
             status = "Stopped";
         } else {
             perror("Unlisted status ID");
+            exit_code = 1;
         }
         printf("[%d] %s %s [%d]\n",
                i + 1,
@@ -53,6 +55,7 @@ void jobs() {
 void kjob(int pid, int signal) {
     if (pid > job_count || pid < 1) {
         perror("Job ID is out of range or not has been removed");
+        exit_code = 1;
         return;
     }
     kill(pid, signal);
@@ -68,6 +71,7 @@ void bg(int idx) {
     idx--;
     if (idx >= job_count || idx < 0) {
         perror("Job ID is out of range or not has been removed");
+        exit_code = 1;
         return;
     }
     kill(job_list[idx].pid, SIGTTIN);
@@ -78,6 +82,7 @@ void fg(int idx) {
     idx--;
     if (idx >= job_count || idx < 0) {
         perror("Job ID is out of range or not has been removed");
+        exit_code = 1;
         return;
     }
     signal(SIGTTIN, SIG_IGN);

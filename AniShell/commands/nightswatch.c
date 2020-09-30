@@ -1,11 +1,13 @@
 #include "nightswatch.h"
+
 #include <stdio.h>
 #include <time.h>
 #include <stdlib.h>
-#include <fcntl.h>
 #include <unistd.h>
+
 #include "../utils/io.h"
 #include "../utils/string.h"
+#include "../processor/prompt.h"
 
 void nightswatch(bool cpu, int interval) {
     clock_t before = clock();
@@ -22,6 +24,7 @@ void watch_cpu() {
     FILE* f_ptr = fopen("/proc/interrupts", "r");
     if (f_ptr == NULL) {
         perror("Could not read from Proc file");
+        exit_code = 1;
         return;
     }
     char* buffer = (char*)calloc(MAX_TOKENS_IN_COMMAND, 1);

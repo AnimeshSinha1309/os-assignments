@@ -6,6 +6,7 @@
 #include <string.h>
 #include <unistd.h>
 #include "pwd.h"
+#include "../processor/prompt.h"
 
 char* pstatus(char* pid) {
     String pid_path = string_join("/proc/", string_join(pid, "/stat").c_str);
@@ -14,6 +15,7 @@ char* pstatus(char* pid) {
     char* buf = (char*)calloc(MAX_LETTERS_IN_TOKEN, 1);
     if (read(stat_file, buf, 10000) == 0) {
         perror("Couldn't read /proc/pid/stat");
+        exit_code = 1;
         return NULL;
     }
     close(stat_file);
