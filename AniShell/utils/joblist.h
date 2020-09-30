@@ -7,7 +7,6 @@
 struct JobItem {
     int pid;
     String name;
-    bool del;
 };
 
 int job_count;

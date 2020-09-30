@@ -8,6 +8,8 @@
 
 #include "../utils/joblist.h"
 #include "pinfo.h"
+#include "../processor/signal.h"
+
 
 void setenvr(String var, String value) {
     String command = string_join(var.c_str, string_join("=", value.c_str).c_str);
@@ -26,9 +28,23 @@ void getenvr(String var) {
 
 void jobs() {
     for (int i = 0; i < job_count; i++) {
+        char* status = pstatus(string_itoa(job_list[i].pid).c_str);
+        if (status == NULL) {
+            continue;
+        } else if (status[0] == 'R') {
+            status = "Running";
+        } else if (status[0] == 'S' || status[0] == 'D') {
+            status = "Sleeping";
+        } else if (status[0] == 'Z' || status[0] == 'z') {
+            status = "Zombie";
+        } else if (status[0] == 'T' || status[0] == 't') {
+            status = "Stopped";
+        } else {
+            perror("Unlisted status ID");
+        }
         printf("[%d] %s %s [%d]\n",
                i + 1,
-               pstatus(string_itoa(job_list[i].pid).c_str),
+               status,
                job_list[i].name.c_str,
                job_list[i].pid);
     }
@@ -70,10 +86,10 @@ void fg(int idx) {
     kill(job_list[idx].pid, SIGCONT);
 
     int st;
+    current_process = job_list[idx].pid;
     waitpid(job_list[idx].pid, &st, WUNTRACED);
 
     tcsetpgrp(0, getpgrp());
     signal(SIGTTIN, SIG_DFL);
     signal(SIGTTOU, SIG_DFL);
-    job_list[idx].del = true;
 }

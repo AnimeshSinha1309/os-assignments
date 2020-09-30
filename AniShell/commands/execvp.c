@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include "../utils/terminate.h"
 #include "../utils/joblist.h"
+#include "../processor/signal.h"
 
 void exec(char* command, char** args, bool background) {
     process_name = command;
@@ -36,6 +37,7 @@ void exec(char* command, char** args, bool background) {
             signal(SIGTTIN, SIG_DFL);
             signal(SIGTTOU, SIG_DFL);
         } else {
+            current_process = child;
             setpgid(child, 0);
             tcsetpgrp(0, getpgrp());
         }

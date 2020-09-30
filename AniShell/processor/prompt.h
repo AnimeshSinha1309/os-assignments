@@ -4,6 +4,7 @@
 #include "../utils/string.h"
 
 struct String home_path;
+struct String prev_path;
 
 void prompt_init();
 void prompt_print();

@@ -1,7 +1,7 @@
 #ifndef ANISHELL_SIGNAL_H
 #define ANISHELL_SIGNAL_H
 
-int current_process = -1;
+int current_process;
 
 void initialize_signals();
 

@@ -9,6 +9,5 @@ void initialize_joblist() {
 void jobs_push(String name, int pid) {
     job_list[job_count].pid = pid;
     job_list[job_count].name = name;
-    job_list[job_count].del = false;
     job_count++;
 }
