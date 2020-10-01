@@ -10,4 +10,8 @@
 void pipeline(String input);
 void redirections(String input);
 
+void run_statement(String input);
+void run_expression_or(String input);
+void run_expression_and(String input);
+
 #endif //ANISHELL_PIPELINE_H

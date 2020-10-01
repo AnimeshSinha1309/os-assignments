@@ -1,12 +1,34 @@
 #include "pipeline.h"
+#include "prompt.h"
 
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
-#include <string.h>
 #include <sys/wait.h>
 #include <sys/fcntl.h>
 
+void run_statement(String input) {
+    Strmat commands = tokenize_str(input, ";");
+    for (int i = 0; i < commands.length; i++) {
+        run_expression_and(strmat_get(commands, i));
+    }
+}
+
+void run_expression_and(String input) {
+    Strmat commands = tokenize_str(input, "@");
+    for (int i = 0; i < commands.length; i++) {
+        run_expression_or(strmat_get(commands, i));
+        if (exit_code == 0) break;
+    }
+}
+
+void run_expression_or(String input) {
+    Strmat commands = tokenize_str(input, "$");
+    for (int i = 0; i < commands.length; i++) {
+        pipeline(strmat_get(commands, i));
+        if (exit_code != 0) break;
+    }
+}
 
 void pipeline(String input) {
     int *buffer_1 = calloc(2, sizeof(int)), *buffer_2 = calloc(2, sizeof(int));
