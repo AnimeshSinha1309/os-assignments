@@ -14,6 +14,7 @@
 #include "../commands/nightswatch.h"
 #include "pipeline.h"
 #include "../commands/syscom.h"
+#include "prompt.h"
 
 
 void await_input() {
@@ -30,10 +31,18 @@ void await_input() {
     free(com_value);
 }
 
-bool shift_matches(const char* command, String input) {
+bool shift_matches(const char *command, String input) {
     struct String com = string_make(command);
     int match = string_match(com, input);
     return (match == com.length && (input.length == com.length || input.c_str[com.length] == ' '));
+}
+
+int count_args(String command) {
+    int ans = 0;
+    for (int i = 0; i < command.length; i++) {
+        if (command.c_str[i] == ' ') ans++;
+    }
+    return ans;
 }
 
 String clean_input(String input) {
@@ -49,6 +58,7 @@ String clean_input(String input) {
 #pragma ide diagnostic ignored "cppcoreguidelines-narrowing-conversions"
 void process_input(String input) {
     input = clean_input(input);
+    int args_count = count_args(input);
     write_history(input);
     if (shift_matches("cd", input)) {
         string_pop_front(&input, ' ');
@@ -102,12 +112,22 @@ void process_input(String input) {
         }
         if (!printed_something) ls(string_make("."), a, l);
     } else if (shift_matches("setenv", input)) {
+        if (args_count > 2 || args_count == 0) {
+            perror("setenv takes 1 or 2 command arguments");
+            exit_code = 1;
+            return;
+        }
         string_pop_front(&input, ' ');
         String var = string_peek_front(input, ' ');
         string_pop_front(&input, ' ');
-        String val = string_peek_front(input, ' ');
+        String val = (input.length == 0) ? string_make("") : string_peek_front(input, ' ');
         setenvr(var, val);
     } else if (shift_matches("unsetenv", input)) {
+        if (args_count != 1) {
+            perror("unsetenv takes 1 command argument");
+            exit_code = 1;
+            return;
+        }
         string_pop_front(&input, ' ');
         String var = string_peek_front(input, ' ');
         unsetenvr(var);
@@ -116,20 +136,45 @@ void process_input(String input) {
         String var = string_peek_front(input, ' ');
         getenvr(var);
     } else if (shift_matches("jobs", input)) {
+        if (args_count != 0) {
+            perror("jobs takes no command arguments");
+            exit_code = 1;
+            return;
+        }
         jobs();
     } else if (shift_matches("kjob", input)) {
+        if (args_count != 2) {
+            perror("kjob takes 2 command arguments");
+            exit_code = 1;
+            return;
+        }
         string_pop_front(&input, ' ');
         String pid = string_peek_front(input, ' ');
         string_pop_front(&input, ' ');
         String signal = string_peek_front(input, ' ');
         kjob(strtol(pid.c_str, NULL, 10), strtol(signal.c_str, NULL, 10));
     } else if (shift_matches("overkill", input)) {
+        if (args_count != 0) {
+            perror("overkill takes no command arguments");
+            exit_code = 1;
+            return;
+        }
         overkill();
     } else if (shift_matches("bg", input)) {
+        if (args_count != 1) {
+            perror("bg takes 1 command arguments");
+            exit_code = 1;
+            return;
+        }
         string_pop_front(&input, ' ');
         String pid = string_peek_front(input, ' ');
         bg(strtol(pid.c_str, NULL, 10));
     } else if (shift_matches("fg", input)) {
+        if (args_count != 1) {
+            perror("fg takes 1 command arguments");
+            exit_code = 1;
+            return;
+        }
         string_pop_front(&input, ' ');
         String pid = string_peek_front(input, ' ');
         fg(strtol(pid.c_str, NULL, 10));
