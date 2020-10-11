@@ -11,7 +11,12 @@ add_executable(q1
         q1/functions.h q1/functions.c)
 target_link_libraries(q1 m pthread)
 
-add_executable(q2 q2/main.c)
+add_executable(q2
+        q2/main.c
+        q2/company.c q2/company.h
+        q2/zone.c q2/zone.h
+        q2/student.c q2/student.h
+        q2/functions.c q2/functions.h)
 target_link_libraries(q2 m pthread)
 
 add_executable(q3 q3/main.c)

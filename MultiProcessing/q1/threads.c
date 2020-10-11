@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include "functions.h"
-inva
+
 struct List { int l, r, *arr; };
 struct List* get_list(int *arr, int l, int r) { struct List x; x.l = l; x.r = r; x.arr = arr; return &x; }
 
