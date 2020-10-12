@@ -18,31 +18,45 @@ void student_make(Student *student) {
     student->mutex = (pthread_mutex_t *)share_memory(sizeof(pthread_mutex_t));
     pthread_mutex_init(student->mutex, NULL);
     student->state = STUDENT_STATE_GATE;
+    student->tries = 0;
 }
 
 void* student_process(void* input) {
+    // Start from the house
     Student *student = (Student *) input;
-    if (student->state == STUDENT_STATE_GATE) {
-        title_print(CLASS_STUDENT, student->id, "left their house");
-        int time_delay = randint(L_ARRIVAL_TIME, R_ARRIVAL_TIME);
-        char* time_string = calloc(50, sizeof(char));
-        sprintf(time_string, "arrived at gate after %d seconds", time_delay);
-        delay(time_delay);
-        title_print(CLASS_STUDENT, student->id, time_string);
-        n_students_arrived++;
-        while (!assign_slot(student));
-    } else if (student->state > 0) {
-        student->state = (randint(0, 2) == 0)
-                ? STUDENT_STATE_COLLEGE
-                : STUDENT_STATE_HOME;
-    } else if (student->state == STUDENT_STATE_COLLEGE || student->state == STUDENT_STATE_HOME) {
-    }
+    if (student->state != STUDENT_STATE_GATE) perror("At the process start he is not at the gate");
+    title_print(CLASS_STUDENT, student->id, "left their house");
+    // Arrive at the gate with some delay
+    int time_delay = randint(L_ARRIVAL_TIME, R_ARRIVAL_TIME);
+    char* time_string = calloc(50, sizeof(char));
+    sprintf(time_string, "arrived at gate after %d seconds", time_delay);
+    delay(time_delay);
+    title_print(CLASS_STUDENT, student->id, time_string);
+    n_students_arrived++;
+    // Search for a slot
+    while (student->state != STUDENT_STATE_HOME && student->state != STUDENT_STATE_COLLEGE)
+        if (student->state == STUDENT_STATE_GATE)
+            assign_slot(student);
     return NULL;
 }
 
-bool student_test(Company *company) {
-    bool result = (random() <= (int)(RAND_MAX * company->success));
+void student_test(Company *company, Student* student) {
+    bool result = ((double)random() / (double)RAND_MAX) <= company->success;
     if (result == FALSE) {
-
+        student->tries++;
+        char* message = (char*) calloc(50, sizeof(char));
+        sprintf(message, "failed vaccination attempt #%d", student->tries);
+        title_print(CLASS_STUDENT, student->id, message);
+        if (student->tries == 3) {
+            title_print(CLASS_STUDENT, student->id, "got sent home");
+            n_students_vaccinated++;
+            student->state = STUDENT_STATE_HOME;
+        } else {
+            student->state = STUDENT_STATE_GATE;
+        }
+    } else {
+        student->state = STUDENT_STATE_COLLEGE;
+        n_students_vaccinated++;
+        title_print(CLASS_STUDENT, student->id, "got into the college");
     }
 }

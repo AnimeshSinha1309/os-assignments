@@ -2,7 +2,6 @@
 #include <pthread.h>
 #include "zone.h"
 
-
 void zone_init(int n) {
     n_zones = n;
     all_zones = (Zone*) calloc(n_zones, sizeof(Zone));
@@ -20,15 +19,20 @@ void zone_make(Zone* zone) {
 bool assign_batch(Company* company) {
     for (int i = 0; i < n_zones; i++) {
         pthread_mutex_lock(all_zones[i].mutex);
-        if (all_zones[i].num_slots == all_zones[i].used_slots) {
+        delay(2);
+        if (all_zones[i].num_slots == 0) {
             // Get the number of drugs and print it
             char* message = calloc(50, sizeof(char));
             all_zones[i].num_slots = min_3(8,
                     n_students_arrived - n_students_vaccinated,
                     company->doses_in_batch[company->num_batches - 1]);
+            all_zones[i].waiting_list = (Student**) calloc(all_zones[i].num_slots, sizeof(Student*));
             all_zones[i].used_slots = 0;
-            if (all_zones[i].num_slots == 0) continue;
-            sprintf(message, "company %d supplied %d", company->id + 1, all_zones[i].num_slots);
+            if (all_zones[i].num_slots == 0) {
+                pthread_mutex_unlock(all_zones[i].mutex);
+                continue;
+            }
+            sprintf(message, "company %d supplied %d doses", company->id + 1, all_zones[i].num_slots);
             // Update the details for the company
             all_zones[i].company_of_purchase = company;
             company->num_batches--;
@@ -45,17 +49,35 @@ bool assign_slot(Student* student) {
     for (int i = 0; i < n_zones; i++) {
         pthread_mutex_lock(all_zones[i].mutex);
         if (all_zones[i].num_slots > all_zones[i].used_slots) {
-            all_zones[i].used_slots++;
-            student->state = i;
+            // Update the zone
             char* message = calloc(50, sizeof(char));
             sprintf(message, "accepted student %d ", student->id + 1);
             title_print(CLASS_ZONE, all_zones[i].id, message);
+            // Update the student
+            student->state = i;
+            all_zones[i].waiting_list[all_zones[i].used_slots] = student;
+            all_zones[i].used_slots++;
+            // Unlock and leave
             pthread_mutex_unlock(all_zones[i].mutex);
             return TRUE;
-        } else {
-            all_zones[i].company_of_purchase = NULL;
         }
         pthread_mutex_unlock(all_zones[i].mutex);
     }
     return FALSE;
+}
+
+void* zone_process(void *input) {
+    Zone *zone = (Zone *) input;
+    while (n_students_vaccinated < n_students) {
+        if (zone->num_slots != 0 && zone->num_slots == zone->used_slots) {
+            title_print(CLASS_ZONE, zone->id, "is starting vaccination");
+            for (int j = 0; j < zone->num_slots; j++) {
+                student_test(zone->company_of_purchase, zone->waiting_list[j]);
+            }
+            zone->company_of_purchase = NULL;
+            zone->num_slots = 0;
+            zone->used_slots = 0;
+        }
+    }
+    return NULL;
 }

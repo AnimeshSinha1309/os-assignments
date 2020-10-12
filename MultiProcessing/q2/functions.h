@@ -21,13 +21,13 @@ typedef int bool;
 #define CLASS_STUDENT 2
 
 #define L_ARRIVAL_TIME 1
-#define R_ARRIVAL_TIME 5
+#define R_ARRIVAL_TIME 5 + 1
 #define L_PRODUCTION_TIME 2
-#define R_PRODUCTION_TIME 5
+#define R_PRODUCTION_TIME 5 + 1
 #define L_BATCHES_PRODUCED 1
-#define R_BATCHES_PRODUCED 5
-#define L_DOSES_IN_BATCH 10
-#define R_DOSES_IN_BATCH 20
+#define R_BATCHES_PRODUCED 5 + 1
+#define L_DOSES_IN_BATCH 1
+#define R_DOSES_IN_BATCH 1 + 1
 
 int randint(int l, int r);
 void delay(int time);
@@ -35,6 +35,5 @@ char* get_time();
 void title_print(int type, int id, char* str);
 void *share_memory(size_t size);
 int min_3(int a, int b, int c);
-
 
 #endif //MULTIPROCESSING_FUNCTIONS_H

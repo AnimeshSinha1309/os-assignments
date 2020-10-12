@@ -11,6 +11,7 @@
 typedef struct Student {
     int id;
     int state;
+    int tries;
     pthread_mutex_t* mutex;
 } Student;
 
@@ -21,6 +22,6 @@ Student *all_students;
 void student_init(int n);
 void student_make(Student *student);
 void* student_process(void *student);
-bool student_test(Company *company);
+void student_test(Company *company, Student* student);
 
 #endif //MULTIPROCESSING_STUDENT_H

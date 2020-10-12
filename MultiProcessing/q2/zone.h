@@ -12,6 +12,7 @@ typedef struct Zone {
     int num_slots, used_slots;
     Company* company_of_purchase;
     pthread_mutex_t *mutex;
+    Student** waiting_list;
 } Zone;
 
 int n_zones;
@@ -21,5 +22,6 @@ void zone_init(int n); // Class Initializer
 void zone_make(Zone* zone); // Object Constructor
 bool assign_batch(Company* company); // Gets a zone to send a batch to
 bool assign_slot(Student* student); // Gets a zone with a free slot
+void* zone_process(void *input);
 
 #endif //MULTIPROCESSING_ZONE_H
