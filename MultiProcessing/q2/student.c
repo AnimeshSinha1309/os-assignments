@@ -12,6 +12,8 @@ void student_init(int n) {
         all_students[i].id = i;
         student_make(all_students + i);
     }
+    students_mutex = (pthread_mutex_t *)share_memory(sizeof(pthread_mutex_t));
+    pthread_mutex_init(students_mutex, NULL);
 }
 
 void student_make(Student *student) {
@@ -34,9 +36,14 @@ void* student_process(void* input) {
     title_print(CLASS_STUDENT, student->id, time_string);
     n_students_arrived++;
     // Search for a slot
-    while (student->state != STUDENT_STATE_HOME && student->state != STUDENT_STATE_COLLEGE)
+    while (TRUE) {
+        pthread_mutex_lock(student->mutex);
+        if (student->state == STUDENT_STATE_HOME || student->state == STUDENT_STATE_COLLEGE)
+            break;
         if (student->state == STUDENT_STATE_GATE)
             assign_slot(student);
+        pthread_mutex_unlock(student->mutex);
+    }
     return NULL;
 }
 

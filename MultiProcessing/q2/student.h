@@ -8,6 +8,8 @@
 #define STUDENT_STATE_COLLEGE -2
 #define STUDENT_STATE_HOME -1
 
+pthread_mutex_t* students_mutex;
+
 typedef struct Student {
     int id;
     int state;

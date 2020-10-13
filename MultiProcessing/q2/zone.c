@@ -20,19 +20,11 @@ bool assign_batch(Company* company) {
     for (int i = 0; i < n_zones; i++) {
         pthread_mutex_lock(all_zones[i].mutex);
         delay(2);
-        if (all_zones[i].num_slots == 0) {
+        if (all_zones[i].vaccines == 0 && all_zones[i].num_slots == 0) {
             // Get the number of drugs and print it
             char* message = calloc(50, sizeof(char));
-            all_zones[i].num_slots = min_3(8,
-                    n_students_arrived - n_students_vaccinated,
-                    company->doses_in_batch[company->num_batches - 1]);
-            all_zones[i].waiting_list = (Student**) calloc(all_zones[i].num_slots, sizeof(Student*));
-            all_zones[i].used_slots = 0;
-            if (all_zones[i].num_slots == 0) {
-                pthread_mutex_unlock(all_zones[i].mutex);
-                continue;
-            }
-            sprintf(message, "company %d supplied %d doses", company->id + 1, all_zones[i].num_slots);
+            all_zones[i].vaccines = company->doses_in_batch[company->num_batches - 1];
+            sprintf(message, "company %d supplied %d doses", company->id + 1, all_zones[i].vaccines);
             // Update the details for the company
             all_zones[i].company_of_purchase = company;
             company->num_batches--;
@@ -69,15 +61,27 @@ bool assign_slot(Student* student) {
 void* zone_process(void *input) {
     Zone *zone = (Zone *) input;
     while (n_students_vaccinated < n_students) {
+        pthread_mutex_lock(zone->mutex);
         if (zone->num_slots != 0 && zone->num_slots == zone->used_slots) {
+            // If a set of slots is full, start vaccination and dump these slots
             title_print(CLASS_ZONE, zone->id, "is starting vaccination");
             for (int j = 0; j < zone->num_slots; j++) {
                 student_test(zone->company_of_purchase, zone->waiting_list[j]);
             }
-            zone->company_of_purchase = NULL;
             zone->num_slots = 0;
             zone->used_slots = 0;
+        } else if (zone->num_slots == 0 && zone->vaccines != 0) {
+            // If all slots got dumped, and there are vaccines left, start off again
+            zone->num_slots = min_3(8, n_students_arrived - n_students_vaccinated, zone->vaccines);
+            zone->vaccines -= zone->num_slots;
+            zone->waiting_list = (Student**) calloc(zone->num_slots, sizeof(Student*));
+            zone->used_slots = 0;
+
+            char* message = calloc(50, sizeof(char));
+            sprintf(message, "made %d slots", zone->num_slots);
+            title_print(CLASS_ZONE, zone->id, message);
         }
+        pthread_mutex_unlock(zone->mutex);
     }
     return NULL;
 }

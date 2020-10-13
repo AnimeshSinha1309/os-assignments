@@ -13,6 +13,7 @@ typedef struct Zone {
     Company* company_of_purchase;
     pthread_mutex_t *mutex;
     Student** waiting_list;
+    int vaccines;
 } Zone;
 
 int n_zones;
