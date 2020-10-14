@@ -19,5 +19,9 @@ add_executable(q2
         q2/functions.c q2/functions.h)
 target_link_libraries(q2 m pthread)
 
-add_executable(q3 q3/main.c)
+add_executable(q3 q3/main.c
+        q3/distrib.c q3/distrib.h
+        q3/musician.c q3/musician.h
+        q3/stage.c q3/stage.h
+        q3/functions.c q3/functions.h)
 target_link_libraries(q3 m pthread)
