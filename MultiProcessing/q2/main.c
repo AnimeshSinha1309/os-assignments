@@ -24,7 +24,7 @@ int main() {
     for (int i = 0; i < n_company; i++)
         pthread_create(&student_threads[i], NULL, company_process, all_companies + i);
     pthread_t *zone_threads = (pthread_t *) share_memory(sizeof(pthread_t) * n_student);
-    for (int i = 0; i < n_company; i++)
+    for (int i = 0; i < n_zone; i++)
         pthread_create(&zone_threads[i], NULL, zone_process, all_zones + i);
     // Wrap the starter process up
     for (int i = 0; i < n_student; i++) {
@@ -33,7 +33,7 @@ int main() {
     for (int i = 0; i < n_company; i++) {
         pthread_join(company_threads[i], NULL);
     }
-    for (int i = 0; i < n_company; i++) {
+    for (int i = 0; i < n_zone; i++) {
         pthread_join(zone_threads[i], NULL);
     }
     return 0;

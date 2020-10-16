@@ -4,7 +4,7 @@
 #include "company.h"
 #include "functions.h"
 
-#define STUDENT_STATE_GATE 0
+#define STUDENT_STATE_GATE -3
 #define STUDENT_STATE_COLLEGE -2
 #define STUDENT_STATE_HOME -1
 
@@ -18,7 +18,7 @@ typedef struct Student {
 } Student;
 
 int n_students;
-int n_students_arrived, n_students_vaccinated;
+int n_students_arrived, n_students_vaccinated, n_students_queued;
 Student *all_students;
 
 void student_init(int n);

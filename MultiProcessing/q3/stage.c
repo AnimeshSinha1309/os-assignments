@@ -13,6 +13,11 @@ void stage_init() {
     sem_init(electric_semaphore, 0, n_stages_e);
     sem_init(coordinator_semaphore, 0, n_coordinators);
     sem_init(singer_semaphore, 0, n_stages_a + n_stages_e);
+
+    coordinator_mutex = share_memory(sizeof(sem_t));
+    pthread_mutex_init(coordinator_mutex, NULL);
+    stages_mutex = share_memory(sizeof(sem_t));
+    pthread_mutex_init(stages_mutex, NULL);
 }
 
 

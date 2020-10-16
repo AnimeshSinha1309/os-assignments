@@ -42,6 +42,12 @@ bool assign_slot(Student* student) {
         pthread_mutex_lock(all_zones[i].mutex);
         if (all_zones[i].num_slots > all_zones[i].used_slots) {
             // Update the zone
+            pthread_mutex_lock(student->mutex);
+            if (student->state != STUDENT_STATE_GATE) {
+                pthread_mutex_unlock(student->mutex);
+                pthread_mutex_unlock(all_zones[i].mutex);
+                return FALSE;
+            }
             char* message = calloc(50, sizeof(char));
             sprintf(message, "accepted student %d ", student->id + 1);
             title_print(CLASS_ZONE, all_zones[i].id, message);
@@ -49,6 +55,7 @@ bool assign_slot(Student* student) {
             student->state = i;
             all_zones[i].waiting_list[all_zones[i].used_slots] = student;
             all_zones[i].used_slots++;
+            pthread_mutex_unlock(student->mutex);
             // Unlock and leave
             pthread_mutex_unlock(all_zones[i].mutex);
             return TRUE;
@@ -72,14 +79,19 @@ void* zone_process(void *input) {
             zone->used_slots = 0;
         } else if (zone->num_slots == 0 && zone->vaccines != 0) {
             // If all slots got dumped, and there are vaccines left, start off again
-            zone->num_slots = min_3(8, n_students_arrived - n_students_vaccinated, zone->vaccines);
-            zone->vaccines -= zone->num_slots;
-            zone->waiting_list = (Student**) calloc(zone->num_slots, sizeof(Student*));
+            pthread_mutex_lock(students_mutex);
+            zone->num_slots = min_3(8, n_students_queued, zone->vaccines);
+            n_students_queued -= zone->num_slots;
+            pthread_mutex_unlock(students_mutex);
             zone->used_slots = 0;
 
-            char* message = calloc(50, sizeof(char));
-            sprintf(message, "made %d slots", zone->num_slots);
-            title_print(CLASS_ZONE, zone->id, message);
+            if (zone->num_slots > 0) {
+                zone->vaccines -= zone->num_slots;
+                zone->waiting_list = (Student **) calloc(zone->num_slots, sizeof(Student *));
+                char *message = calloc(50, sizeof(char));
+                sprintf(message, "made %d slots", zone->num_slots);
+                title_print(CLASS_ZONE, zone->id, message);
+            }
         }
         pthread_mutex_unlock(zone->mutex);
     }

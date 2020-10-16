@@ -7,6 +7,7 @@ void student_init(int n) {
     n_students = n;
     n_students_arrived = 0;
     n_students_vaccinated = 0;
+    n_students_queued = 0;
     all_students = (Student*) calloc(n_students, sizeof(Student));
     for (int i = 0; i < n_students; i++) {
         all_students[i].id = i;
@@ -35,19 +36,19 @@ void* student_process(void* input) {
     delay(time_delay);
     title_print(CLASS_STUDENT, student->id, time_string);
     n_students_arrived++;
+    n_students_queued++;
     // Search for a slot
     while (TRUE) {
-        pthread_mutex_lock(student->mutex);
         if (student->state == STUDENT_STATE_HOME || student->state == STUDENT_STATE_COLLEGE)
             break;
         if (student->state == STUDENT_STATE_GATE)
             assign_slot(student);
-        pthread_mutex_unlock(student->mutex);
     }
     return NULL;
 }
 
 void student_test(Company *company, Student* student) {
+    pthread_mutex_lock(student->mutex);
     bool result = ((double)random() / (double)RAND_MAX) <= company->success;
     if (result == FALSE) {
         student->tries++;
@@ -60,10 +61,12 @@ void student_test(Company *company, Student* student) {
             student->state = STUDENT_STATE_HOME;
         } else {
             student->state = STUDENT_STATE_GATE;
+            n_students_queued++;
         }
     } else {
         student->state = STUDENT_STATE_COLLEGE;
         n_students_vaccinated++;
         title_print(CLASS_STUDENT, student->id, "got into the college");
     }
+    pthread_mutex_unlock(student->mutex);
 }

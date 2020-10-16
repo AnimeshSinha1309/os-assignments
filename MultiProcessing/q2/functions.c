@@ -1,4 +1,5 @@
 #include "functions.h"
+#include "student.h"
 
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "cert-msc50-cpp"

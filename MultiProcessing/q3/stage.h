@@ -26,4 +26,7 @@ Stage* all_stages;
 void register_spot(Musician* musician, int pos);
 int book_singer(Musician* musician);
 
+pthread_mutex_t* coordinator_mutex;
+pthread_mutex_t* stages_mutex;
+
 #endif //MULTIPROCESSING_STAGE_H
