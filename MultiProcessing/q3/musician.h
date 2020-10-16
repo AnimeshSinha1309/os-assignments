@@ -1,6 +1,9 @@
 #ifndef MULTIPROCESSING_MUSICIAN_H
 #define MULTIPROCESSING_MUSICIAN_H
 
+#include <stdio.h>
+#include <pthread.h>
+
 enum Status {
     NOT_YET_ARRIVED,
     WAITING_TO_PERFORM,
@@ -24,11 +27,13 @@ typedef struct Musician {
     enum Instrument instrument;
     int arrival_time;
     char* name;
+    pthread_mutex_t mutex;
 } Musician;
 
 Musician* all_musicians;
 
 void musician_init();
 void* musician_process(void* input);
+void* musician_perform(void* input_raw);
 
 #endif //MULTIPROCESSING_MUSICIAN_H

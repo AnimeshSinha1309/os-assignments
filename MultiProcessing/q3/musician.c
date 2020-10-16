@@ -1,6 +1,5 @@
 #include "functions.h"
 #include "musician.h"
-#include "distrib.h"
 #include "stage.h"
 
 #include <stdlib.h>
@@ -8,25 +7,94 @@
 #include <semaphore.h>
 #include <pthread.h>
 #include <zconf.h>
+#include <assert.h>
 
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "cert-err34-c"
 void musician_init() {
     all_musicians = (Musician*)share_memory(n_musician * sizeof(Musician));
     for (int i = 0; i < n_musician; i++) {
-        char* name; char instrument; int arrival;
-        scanf("%s %u %d",
+        all_musicians[i].name = (char*) calloc(20, sizeof(char));
+        char instrument_value;
+        scanf("%s %c %d",
                 all_musicians[i].name,
-                &all_musicians[i].instrument,
+                &instrument_value,
                 &all_musicians[i].arrival_time);
-        musician_init(name, instrument, arrival);
+        all_musicians[i].status = NOT_YET_ARRIVED;
+        all_musicians[i].instrument = instrument_value;
+        pthread_mutex_init(&all_musicians[i].mutex, NULL);
+        assert(all_musicians[i].instrument == PIANO || all_musicians[i].instrument == GUITAR
+                || all_musicians[i].instrument == VIOLIN || all_musicians[i].instrument == BASS
+                || all_musicians[i].instrument == SINGER);
     }
 }
 #pragma clang diagnostic pop
 
 void* musician_process(void* input) {
     Musician* musician = (Musician*) input;
-    if (musician->arrival_time == 0)
-    title_print(CLASS_MUSICIAN, , "started from room");
     sleep(musician->arrival_time);
+    printf("%s " COLOR_BLUE "%8s " COLOR_RESTORE "arrived at the event\n", get_time(), musician->name);
+    fflush(stdout);
+    musician->status = WAITING_TO_PERFORM;
+    if (musician->instrument == SINGER) {
+        Queue queue; queue.musician = musician; queue.type = SINGER_STAGE;
+        musician_perform(&queue);
+    } else {
+        pthread_t *thread_1 = NULL, *thread_2 = NULL;
+        if (musician->instrument != VIOLIN) {
+            Queue queue; queue.musician = musician; queue.type = ELECTRIC_STAGE;
+            thread_1 = (pthread_t *) share_memory(sizeof(pthread_t));
+            pthread_create(thread_1, NULL, musician_perform, &queue);
+        }
+        if (musician->instrument != BASS) {
+            Queue queue; queue.musician = musician; queue.type = ACOUSTIC_STAGE;
+            thread_2 = (pthread_t *) share_memory(sizeof(pthread_t));
+            pthread_create(thread_2, NULL, musician_perform, &queue);
+        }
+        if (thread_1 != NULL) pthread_join(*thread_1, NULL);
+        if (thread_2 != NULL) pthread_join(*thread_2, NULL);
+    }
+    return NULL;
+}
+
+void* musician_perform(void* input_raw) {
+    Queue* input = (Queue*) input_raw;
+    Musician* musician = input->musician;
+    switch (input->type) {
+        case ACOUSTIC_STAGE: sem_wait(&acoustic_semaphore); break;
+        case ELECTRIC_STAGE: sem_wait(&electric_semaphore); break;
+        case SINGER_STAGE: sem_wait(&singer_semaphore); break;
+    }
+    // TODO: Implement how singer gets a stage and extends performance
+    // TODO: Implement patience using timed-wait and time checks
+    pthread_mutex_lock(&musician->mutex); // The check-status update-status needs to be atomic
+    if (musician->status == WAITING_TO_PERFORM) {
+        int stage_id;
+        sem_getvalue(&acoustic_semaphore, &stage_id);
+        musician->status = PERFORMING_SOLO;
+        pthread_mutex_unlock(&musician->mutex);
+        printf("%s " COLOR_BLUE "%8s " COLOR_RESTORE "got to " COLOR_RED "stage %d\n" COLOR_RESTORE,
+               get_time(), musician->name, stage_id);
+        fflush(stdout);
+        sleep(randint(t_duration_min, t_duration_max));
+        printf("%s " COLOR_BLUE "%8s " COLOR_RESTORE "completed performance on " COLOR_RED "stage %d\n"
+                COLOR_RESTORE, get_time(), musician->name, stage_id);
+        fflush(stdout);
+        // Collecting the T-Shirt
+        if (input->type != SINGER_STAGE || SINGERS_GET_TSHIRTS) {
+            musician->status = WAITING_FOR_TSHIRT;
+            sem_wait(&coordinator_semaphore);
+            musician->status = COLLECTING_TSHIRT;
+            sleep(2);
+            int coordinator_id; sem_getvalue(&coordinator_semaphore, &coordinator_id);
+            printf("%s " COLOR_BLUE "%8s " COLOR_RESTORE "was given t-shirt by " COLOR_RED "coordinator %d\n"
+                   COLOR_RESTORE, get_time(), musician->name, coordinator_id);
+            fflush(stdout);
+            sem_post(&coordinator_semaphore);
+        }
+        musician->status = EXITED;
+        return NULL;
+    }
+    pthread_mutex_unlock(&musician->mutex);
+    return NULL;
 }

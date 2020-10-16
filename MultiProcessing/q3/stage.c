@@ -1,6 +1,5 @@
 #include "functions.h"
 #include "musician.h"
-#include "distrib.h"
 #include "stage.h"
 
 #include <stdlib.h>
@@ -8,6 +7,10 @@
 #include <semaphore.h>
 #include <pthread.h>
 
-void start_performance() {
+void stage_init() {
 
+    sem_init(&acoustic_semaphore, 0, n_stages_a);
+    sem_init(&electric_semaphore, 0, n_stages_e);
+    sem_init(&singer_semaphore, 0, n_stages_a);
+    sem_init(&coordinator_semaphore, 0, n_coordinators);
 }
