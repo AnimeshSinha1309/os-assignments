@@ -61,39 +61,80 @@ void* musician_perform(void* input_raw) {
     Queue* input = (Queue*) input_raw;
     Musician* musician = input->musician;
     switch (input->type) {
-        case ACOUSTIC_STAGE: sem_wait(&acoustic_semaphore); break;
-        case ELECTRIC_STAGE: sem_wait(&electric_semaphore); break;
-        case SINGER_STAGE: sem_wait(&singer_semaphore); break;
+        case ACOUSTIC_STAGE: sem_wait(acoustic_semaphore); break;
+        case ELECTRIC_STAGE: sem_wait(electric_semaphore); break;
+        case SINGER_STAGE: sem_wait(singer_semaphore); break;
     }
-    // TODO: Implement how singer gets a stage and extends performance
-    // TODO: Implement patience using timed-wait and time checks
     pthread_mutex_lock(&musician->mutex); // The check-status update-status needs to be atomic
     if (musician->status == WAITING_TO_PERFORM) {
         int stage_id;
-        sem_getvalue(&acoustic_semaphore, &stage_id);
-        musician->status = PERFORMING_SOLO;
-        pthread_mutex_unlock(&musician->mutex);
-        printf("%s " COLOR_BLUE "%8s " COLOR_RESTORE "got to " COLOR_RED "stage %d\n" COLOR_RESTORE,
-               get_time(), musician->name, stage_id);
+        switch (input->type) {
+            case ACOUSTIC_STAGE:
+                sem_getvalue(acoustic_semaphore, &stage_id);
+                musician->status = PERFORMING_SOLO;
+                pthread_mutex_unlock(&musician->mutex);
+                printf("%s " COLOR_BLUE "%8s " COLOR_RESTORE "got to " COLOR_RED "acoustic stage %d\n"
+                        COLOR_RESTORE, get_time(), musician->name, stage_id + 1);
+                register_spot(musician, stage_id);
+                break;
+            case ELECTRIC_STAGE:
+                sem_getvalue(electric_semaphore, &stage_id);
+                musician->status = PERFORMING_SOLO;
+                pthread_mutex_unlock(&musician->mutex);
+                printf("%s " COLOR_BLUE "%8s " COLOR_RESTORE "got to " COLOR_RED "electric stage %d\n"
+                       COLOR_RESTORE, get_time(), musician->name, stage_id + 1);
+                register_spot(musician, stage_id + n_stages_a);
+                break;
+            case SINGER_STAGE:
+                sem_getvalue(electric_semaphore, &stage_id);
+                musician->status = PERFORMING_SOLO;
+                int stage_pos = book_singer(musician);
+                if (stage_pos >= n_stages_a)
+                    printf("%s " COLOR_BLUE "%8s " COLOR_RESTORE "got to " COLOR_RED "electric stage %d\n"
+                           COLOR_RESTORE, get_time(), musician->name, stage_id + 1 - n_stages_a);
+                else
+                    printf("%s " COLOR_BLUE "%8s " COLOR_RESTORE "got to " COLOR_RED "acoustic stage %d\n"
+                           COLOR_RESTORE, get_time(), musician->name, stage_id + 1);
+                break;
+        }
+        // TODO: Implement patience using timed-wait and time checks
         fflush(stdout);
         sleep(randint(t_duration_min, t_duration_max));
+        // Checking if the combo extended the performance
+        if (musician->status == PERFORMING_COMBO) {
+            // FIXME: Check that the deregister operation atomic
+            sleep(2);
+        }
+        switch (input->type) {
+            case ACOUSTIC_STAGE: sem_post(acoustic_semaphore); break;
+            case ELECTRIC_STAGE: sem_post(electric_semaphore); break;
+            case SINGER_STAGE: sem_post(singer_semaphore); break;
+        }
+
         printf("%s " COLOR_BLUE "%8s " COLOR_RESTORE "completed performance on " COLOR_RED "stage %d\n"
-                COLOR_RESTORE, get_time(), musician->name, stage_id);
+                COLOR_RESTORE, get_time(), musician->name, stage_id + 1);
         fflush(stdout);
         // Collecting the T-Shirt
         if (input->type != SINGER_STAGE || SINGERS_GET_TSHIRTS) {
             musician->status = WAITING_FOR_TSHIRT;
-            sem_wait(&coordinator_semaphore);
+            sem_wait(coordinator_semaphore);
             musician->status = COLLECTING_TSHIRT;
             sleep(2);
-            int coordinator_id; sem_getvalue(&coordinator_semaphore, &coordinator_id);
+            int coordinator_id; sem_getvalue(coordinator_semaphore, &coordinator_id);
             printf("%s " COLOR_BLUE "%8s " COLOR_RESTORE "was given t-shirt by " COLOR_RED "coordinator %d\n"
-                   COLOR_RESTORE, get_time(), musician->name, coordinator_id);
+                   COLOR_RESTORE, get_time(), musician->name, coordinator_id + 1);
+            // FIXME: Coordinator ID needs to be made atomic too
             fflush(stdout);
-            sem_post(&coordinator_semaphore);
+            sem_post(coordinator_semaphore);
         }
         musician->status = EXITED;
         return NULL;
+    } else {
+        switch (input->type) {
+            case ACOUSTIC_STAGE: sem_post(acoustic_semaphore); break;
+            case ELECTRIC_STAGE: sem_post(electric_semaphore); break;
+            case SINGER_STAGE: sem_post(singer_semaphore); break;
+        }
     }
     pthread_mutex_unlock(&musician->mutex);
     return NULL;

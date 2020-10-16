@@ -27,7 +27,8 @@ void* company_process(void* input) {
             // Poll to check if the drugs have been consumed
             bool can_produce = TRUE;
             for (int i = 0; i < n_zones; i++) {
-                if (all_zones[i].company_of_purchase != NULL && all_zones[i].company_of_purchase->id == company->id)
+                if (all_zones[i].company_of_purchase != NULL && all_zones[i].company_of_purchase->id == company->id
+                        && all_zones[i].vaccines != 0)
                     can_produce = FALSE;
             }
             if (!can_produce) continue;
