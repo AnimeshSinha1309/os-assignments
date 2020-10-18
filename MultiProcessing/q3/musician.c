@@ -8,6 +8,7 @@
 #include <pthread.h>
 #include <zconf.h>
 #include <assert.h>
+#include <errno.h>
 
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "cert-err34-c"
@@ -58,86 +59,83 @@ void* musician_process(void* input) {
 }
 
 void* musician_perform(void* input_raw) {
+    // Put yourself in the queue
     Queue* input = (Queue*) input_raw;
-    Musician* musician = input->musician;
+    Musician* m = input->musician;
+    struct timespec* patience = share_memory(sizeof(struct timespec));
+    timespec_get(patience, TIMER_ABSTIME);
+    patience->tv_sec += t_patience;
+    int return_code_sem = 0;
     switch (input->type) {
-        case ACOUSTIC_STAGE: sem_wait(acoustic_semaphore); break;
-        case ELECTRIC_STAGE: sem_wait(electric_semaphore); break;
-        case SINGER_STAGE: sem_wait(singer_semaphore); break;
+        case ACOUSTIC_STAGE: return_code_sem = sem_timedwait(sem_a, patience); break;
+        case ELECTRIC_STAGE: return_code_sem = sem_timedwait(sem_e, patience); break;
+        case SINGER_STAGE: return_code_sem = sem_timedwait(sem_s, patience); break;
     }
-    pthread_mutex_lock(&musician->mutex); // The check-status update-status needs to be atomic
-    if (musician->status == WAITING_TO_PERFORM) {
-        int stage_id;
-        switch (input->type) {
-            case ACOUSTIC_STAGE:
-                sem_getvalue(acoustic_semaphore, &stage_id);
-                musician->status = PERFORMING_SOLO;
-                pthread_mutex_unlock(&musician->mutex);
-                printf("%s " COLOR_RED "%8s " COLOR_RESTORE "got to " COLOR_RED "acoustic stage %d\n"
-                        COLOR_RESTORE, get_time(), musician->name, stage_id + 1);
-                register_spot(musician, stage_id);
-                break;
-            case ELECTRIC_STAGE:
-                sem_getvalue(electric_semaphore, &stage_id);
-                musician->status = PERFORMING_SOLO;
-                pthread_mutex_unlock(&musician->mutex);
-                printf("%s " COLOR_RED "%8s " COLOR_RESTORE "got to " COLOR_RED "electric stage %d\n"
-                       COLOR_RESTORE, get_time(), musician->name, stage_id + 1);
-                register_spot(musician, stage_id + n_stages_a);
-                break;
-            case SINGER_STAGE:
-                sem_getvalue(electric_semaphore, &stage_id);
-                musician->status = PERFORMING_SOLO;
-                int stage_pos = book_singer(musician);
-                if (stage_pos >= n_stages_a)
-                    printf("%s " COLOR_RED "%8s " COLOR_RESTORE "got to " COLOR_RED "electric stage %d\n"
-                           COLOR_RESTORE, get_time(), musician->name, stage_id + 1 - n_stages_a);
-                else
-                    printf("%s " COLOR_RED "%8s " COLOR_RESTORE "got to " COLOR_RED "acoustic stage %d\n"
-                           COLOR_RESTORE, get_time(), musician->name, stage_id + 1);
-                break;
-        }
-        // TODO: Implement patience using timed-wait and time checks
-        fflush(stdout);
-        sleep(randint(t_duration_min, t_duration_max));
-        // Checking if the combo extended the performance
-        if (musician->status == PERFORMING_COMBO) {
-            // FIXME: Check that the deregister operation atomic
-            sleep(2);
-        }
-        musician->status = WAITING_FOR_TSHIRT;
-        switch (input->type) {
-            case ACOUSTIC_STAGE: sem_post(acoustic_semaphore); break;
-            case ELECTRIC_STAGE: sem_post(electric_semaphore); break;
-            case SINGER_STAGE: sem_post(singer_semaphore); break;
-        }
-
-        printf("%s " COLOR_GREEN "%8s " COLOR_RESTORE "completed performance on " COLOR_GREEN "stage %d\n"
-                COLOR_RESTORE, get_time(), musician->name, stage_id + 1);
-        fflush(stdout);
-        // Collecting the T-Shirt
-        if (input->type != SINGER_STAGE || SINGERS_GET_TSHIRTS) {
-            musician->status = WAITING_FOR_TSHIRT;
-            sem_wait(coordinator_semaphore);
-            musician->status = COLLECTING_TSHIRT;
-            sleep(2);
-            pthread_mutex_lock(coordinator_mutex);
-            int coordinator_id; sem_getvalue(coordinator_semaphore, &coordinator_id);
-            printf("%s " COLOR_BLUE "%8s " COLOR_RESTORE "was given t-shirt by " COLOR_BLUE "coordinator %d\n"
-                   COLOR_RESTORE, get_time(), musician->name, coordinator_id + 1);
+    // Implements patience and quitting if it exceeds time
+    pthread_mutex_lock(&m->mutex);
+    if (return_code_sem != 0) {
+        if (m->status == WAITING_TO_PERFORM) {
+            m->status = EXITED;
+            pthread_mutex_unlock(&m->mutex);
+            printf("%s " COLOR_RED "%8s " COLOR_RESTORE "got impatient " COLOR_RED "and left\n"
+                   COLOR_RESTORE, get_time(), m->name);
             fflush(stdout);
-            sem_post(coordinator_semaphore);
-            pthread_mutex_unlock(coordinator_mutex);
         }
-        musician->status = EXITED;
         return NULL;
     } else {
-        switch (input->type) {
-            case ACOUSTIC_STAGE: sem_post(acoustic_semaphore); break;
-            case ELECTRIC_STAGE: sem_post(electric_semaphore); break;
-            case SINGER_STAGE: sem_post(singer_semaphore); break;
-        }
+        pthread_mutex_unlock(&m->mutex);
     }
-    pthread_mutex_unlock(&musician->mutex);
+    // Check if they used another stage, if so then unlock and leave
+    pthread_mutex_lock(&m->mutex);
+    if (m->status != WAITING_TO_PERFORM) {
+        switch (input->type) {
+            case ACOUSTIC_STAGE: sem_post(sem_a); break;
+            case ELECTRIC_STAGE: sem_post(sem_e); break;
+            case SINGER_STAGE: sem_post(sem_s); break;
+        }
+        pthread_mutex_unlock(&m->mutex);
+        return NULL;
+    } else {
+        // Let's find us a stage
+        switch (input->type) {
+            case ACOUSTIC_STAGE: book_musician(m, ACOUSTIC_STAGE); break;
+            case ELECTRIC_STAGE: book_musician(m, ELECTRIC_STAGE); break;
+            case SINGER_STAGE: book_singer(m); break;
+        }
+        pthread_mutex_unlock(&m->mutex);
+    }
+    if (input->type == ACOUSTIC_STAGE) assert(m->stage_idx < n_stages_a);
+    if (input->type == ELECTRIC_STAGE) assert(m->stage_idx >= n_stages_a);
+    // Do the performance
+    sleep(randint(t_duration_min, t_duration_max));
+    // And leave that stage
+    pthread_mutex_lock(stages_mutex);
+    if (input->type == SINGER_STAGE) {
+        all_stages[m->stage_idx].singer = NULL;
+        sem_post(sem_s);
+    } else {
+        all_stages[m->stage_idx].musician = NULL;
+    }
+    printf("%s " COLOR_GREEN "%8s " COLOR_RESTORE "completed performance on " COLOR_GREEN "stage %d\n"
+           COLOR_RESTORE, get_time(), m->name, m->stage_idx + 1);
+    sem_post((m->stage_idx < n_stages_a) ? sem_a : sem_e);
+    // Checking if the combo extended the performance
+    if (m->status == PERFORMING_COMBO) sleep(2);
+    pthread_mutex_unlock(stages_mutex);
+    // Collecting the T-Shirt
+    if (input->type != SINGER_STAGE || SINGERS_GET_TSHIRTS) {
+        m->status = WAITING_FOR_TSHIRT;
+        sem_wait(coordinator_semaphore);
+        m->status = COLLECTING_TSHIRT;
+        sleep(2);
+        pthread_mutex_lock(coordinator_mutex);
+        int coordinator_id; sem_getvalue(coordinator_semaphore, &coordinator_id);
+        printf("%s " COLOR_BLUE "%8s " COLOR_RESTORE "was given t-shirt by " COLOR_BLUE "coordinator\n"
+               COLOR_RESTORE, get_time(), m->name);
+        fflush(stdout);
+        sem_post(coordinator_semaphore);
+        pthread_mutex_unlock(coordinator_mutex);
+    }
+    m->status = EXITED;
     return NULL;
 }

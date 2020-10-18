@@ -27,6 +27,7 @@ typedef struct Musician {
     enum Instrument instrument;
     int arrival_time;
     char* name;
+    int stage_idx;
     pthread_mutex_t mutex;
 } Musician;
 

@@ -12,6 +12,7 @@ int main() {
     fflush(stdout);
     scanf("%d %d %d %d %d %d %d", &n_musician, &n_stages_a, &n_stages_e,
             &n_coordinators, &t_duration_min, &t_duration_max, &t_patience);
+    t_patience = 1000;
     // Branch off and start all processes
     stage_init();
     musician_init();

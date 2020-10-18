@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <sys/shm.h>
+#include <time.h>
 
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "hicpp-signed-bitwise"
@@ -11,6 +12,12 @@ int *share_memory(size_t size) {
     return (int *)shmat(shm_id, NULL, 0);
 }
 #pragma clang diagnostic pop
+
+long double time_abs() {
+    struct timespec time;
+    clock_gettime(CLOCK_MONOTONIC_RAW, &time);
+    return time.tv_nsec / 1e9 + time.tv_sec;
+}
 
 // Swaps 2 integers given the pointers
 void swap(int* i, int* j) {
