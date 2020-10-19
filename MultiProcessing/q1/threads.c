@@ -19,7 +19,7 @@ void* merge_sort_3(void *input) {
     pthread_join(tid_1, NULL);
     pthread_join(tid_2, NULL);
     int arr_l[m - arr->l], arr_r[arr->r - m];
-    for (int i = arr->l; i < m; i++) arr_l[i] = arr->arr[i - arr->l];
+    for (int i = arr->l; i < m; i++) arr_l[i - arr->l] = arr->arr[i];
     for (int i = m; i < arr->r; i++) arr_r[i - m] = arr->arr[i];
     int i = 0, j = 0, k = arr->l;
     for (; i < m - arr->l && j < arr->r - m; k++)

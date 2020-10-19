@@ -34,6 +34,8 @@ int book_singer(Musician* musician) {
             if (all_stages[i].musician != NULL) {
                 all_stages[i].musician->status = PERFORMING_COMBO;
                 all_stages[i].singer->status = PERFORMING_COMBO;
+                printf("%s " COLOR_BLUE "%8s " COLOR_RESTORE "and " COLOR_RED "%8s are performing a combo\n"
+                       COLOR_RESTORE, get_time(), all_stages[i].singer->name, all_stages[i].musician->name);
             }
             pthread_mutex_unlock(waiting_mutex);
             // Print the stage it got
