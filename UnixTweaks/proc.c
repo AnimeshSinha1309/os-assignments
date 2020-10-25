@@ -371,6 +371,33 @@ waitx(int* wtime, int* rtime)
     }
 }
 
+// Per-CPU process scheduler.
+// Each CPU calls scheduler() after setting itself up.
+void
+pslist(void)
+{
+    static char *states[] = {
+            [UNUSED]    "unused",
+            [EMBRYO]    "embryo",
+            [SLEEPING]  "sleep ",
+            [RUNNABLE]  "runble",
+            [RUNNING]   "run   ",
+            [ZOMBIE]    "zombie"
+    };
+
+    cprintf("%s\t%s\t%s\t\t%s\t%s\t\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
+            "pid", "priority", "status", "r_time", "w_time",
+            "n_run", "cur_q", "q1", "q2", "q3", "q4", "q5");
+    for(struct proc *p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+        if (p->state == UNUSED) continue;
+        cprintf("%d\t%d\t\t%s\t\t%d\t%d\t\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n",
+                p->pid, p->priority, states[p->state],
+                p->running_time, ticks - p->start_time - p->running_time,
+                p->n_run, p->cur_q,
+                p->q_ticks[0], p->q_ticks[1], p->q_ticks[2], p->q_ticks[3], p->q_ticks[4]);
+    }
+}
+
 //PAGEBREAK: 42
 // Per-CPU process scheduler.
 // Each CPU calls scheduler() after setting itself up.

@@ -52,6 +52,12 @@ sys_getpid(void)
   return myproc()->pid;
 }
 
+void
+sys_pslist(void)
+{
+    return pslist();
+}
+
 int
 sys_sbrk(void)
 {
