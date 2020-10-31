@@ -7,7 +7,6 @@
 #include "x86.h"
 #include "traps.h"
 #include "spinlock.h"
-#include "schedulers.h"
 
 // Interrupt descriptor table (shared by all CPUs).
 struct gatedesc idt[256];
@@ -112,6 +111,15 @@ trap(struct trapframe *tf)
   if(myproc() && myproc()->state == RUNNING &&
      tf->trapno == T_IRQ0+IRQ_TIMER)
     yield();
+#endif
+
+#ifdef SCHEDULER_PBS
+  if (myproc() && myproc()->state == RUNNING &&
+      tf->trapno == T_IRQ0 + IRQ_TIMER) {
+    if (should_preempt(myproc()->priority)) {
+      yield();
+    }
+  }
 #endif
 
   // Check if the process has been killed since we yielded

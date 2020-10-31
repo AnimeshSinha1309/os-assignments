@@ -6,7 +6,6 @@
 #include "x86.h"
 #include "proc.h"
 #include "spinlock.h"
-#include "schedulers.h"
 
 struct {
   struct spinlock lock;
@@ -119,6 +118,7 @@ found:
   p->end_time = -1;
   p->last_enqueue_ticks = -1;
   p->num_run = 0;
+  p->priority = DEFAULT_PRIORITY;
   return p;
 }
 
@@ -218,6 +218,10 @@ fork(void)
   safestrcpy(np->name, curproc->name, sizeof(curproc->name));
 
   pid = np->pid;
+
+#ifdef SCHEDULER_PBS
+  np->priority = curproc->priority;
+#endif
 
   acquire(&ptable.lock);
 
@@ -468,6 +472,27 @@ scheduler(void)
     }
 #endif
 
+#ifdef SCHEDULER_PBS
+    struct proc *best_process = 0;
+    for (p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
+      if (p->state == RUNNABLE) {
+        if (best_process == 0 || p->priority < best_process->priority)
+          best_process = p;
+      }
+    }
+
+    if (best_process != 0) {
+      c->proc = best_process;
+      switchuvm(best_process);
+      best_process->state = RUNNING;
+      swtch(&(c->scheduler), best_process->context);
+      switchkvm();
+      // Process is done running for now.
+      // It should have changed its p->state before coming back.
+      c->proc = 0;
+    }
+#endif
+
     release(&ptable.lock);
 
   }
@@ -650,3 +675,39 @@ procdump(void)
     cprintf("\n");
   }
 }
+
+// Priority Based Scheduling
+
+#ifdef SCHEDULER_PBS
+
+int should_preempt(int priority) {
+  int result = 0;
+  acquire(&ptable.lock);
+  for (struct proc *p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
+    if (p->state == RUNNABLE && p->priority < priority) {
+      result = 1;
+      break;
+    }
+  }
+  release(&ptable.lock);
+  return result;
+}
+
+#endif
+
+// Multi Level Feedback Queue Scheduling
+
+#ifdef SCHEDULER_MLFQ
+
+#endif
+
+// First Come First Serve Scheduling
+
+#ifdef SCHEDULER_FCFS
+
+#endif
+
+// Round Robin Scheduling
+
+#ifdef SCHEDULER_RR
+#endif
