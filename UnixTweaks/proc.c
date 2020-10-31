@@ -390,7 +390,7 @@ pslist(void)
             "n_run", "cur_q", "q1", "q2", "q3", "q4", "q5");
     for(struct proc *p = ptable.proc; p < &ptable.proc[NPROC]; p++){
         if (p->state == UNUSED) continue;
-        cprintf("%d\t%d\t\t%s\t\t%d\t%d\t\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n",
+        cprintf("%d\t%d\t\t\t%s\t\t%d\t\t%d\t\t\t%d\t\t%d\t\t%d\t%d\t%d\t%d\t%d\n",
                 p->pid, p->priority, states[p->state],
                 p->running_time, ticks - p->start_time - p->running_time,
                 p->n_run, p->cur_q,
