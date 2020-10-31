@@ -219,9 +219,7 @@ fork(void)
 
   pid = np->pid;
 
-#ifdef SCHEDULER_PBS
   np->priority = curproc->priority;
-#endif
 
   acquire(&ptable.lock);
 
@@ -461,13 +459,9 @@ scheduler(void)
       // Switch the CPU process to the selected one
       c->proc = first_process;
       switchuvm(first_process);
-      if (first_process->state != RUNNABLE) panic("Status not RUNNABLE in process selected by FCFS\n");
-
       first_process->state = RUNNING;
       swtch(&(c->scheduler), first_process->context);
       switchkvm();
-      // Process is done running for now.
-      // It should have changed its p->state before coming back.
       c->proc = 0;
     }
 #endif
@@ -482,6 +476,34 @@ scheduler(void)
     }
 
     if (best_process != 0) {
+      c->proc = best_process;
+      switchuvm(best_process);
+      best_process->state = RUNNING;
+      swtch(&(c->scheduler), best_process->context);
+      switchkvm();
+      c->proc = 0;
+    }
+#endif
+
+#ifdef SCHEDULER_MLFQ
+    // Update the values for the priorities to implement aging
+    for (p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
+      if (p->state == RUNNABLE && p->priority != 0 && ticks - p->last_enqueue_ticks > AGING_THRESHOLD) {
+        p->priority--;
+      }
+    }
+    // Select the best process
+    struct proc *best_process = 0;
+    for (p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
+      if (p->state == RUNNABLE) {
+        if (best_process == 0 || p->priority < best_process->priority ||
+            (p->priority == best_process->priority && p->last_enqueue_ticks < best_process->last_enqueue_ticks))
+          best_process = p;
+      }
+    }
+    // Start executing it
+    if (best_process != 0) {
+      p->last_enqueue_ticks = ticks;
       c->proc = best_process;
       switchuvm(best_process);
       best_process->state = RUNNING;
@@ -675,39 +697,3 @@ procdump(void)
     cprintf("\n");
   }
 }
-
-// Priority Based Scheduling
-
-#ifdef SCHEDULER_PBS
-
-int should_preempt(int priority) {
-  int result = 0;
-  acquire(&ptable.lock);
-  for (struct proc *p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
-    if (p->state == RUNNABLE && p->priority < priority) {
-      result = 1;
-      break;
-    }
-  }
-  release(&ptable.lock);
-  return result;
-}
-
-#endif
-
-// Multi Level Feedback Queue Scheduling
-
-#ifdef SCHEDULER_MLFQ
-
-#endif
-
-// First Come First Serve Scheduling
-
-#ifdef SCHEDULER_FCFS
-
-#endif
-
-// Round Robin Scheduling
-
-#ifdef SCHEDULER_RR
-#endif

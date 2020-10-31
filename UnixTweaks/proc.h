@@ -72,15 +72,27 @@ struct proc {
 // Select the Scheduler you want
 #undef SCHEDULER_FCFS
 #undef SCHEDULER_RR
-#define SCHEDULER_PBS
-#undef SCHEDULER_MLFQ
+#undef SCHEDULER_PBS
+#define SCHEDULER_MLFQ
 
 // Priority Based Scheduling
 
 #ifdef SCHEDULER_PBS
 
 #define DEFAULT_PRIORITY 60
-int should_preempt(int priority);
+
+int should_preempt(int priority) {
+  int result = 0;
+  acquire(&ptable.lock);
+  for (struct proc *p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
+    if (p->state == RUNNABLE && p->priority < priority) {
+      result = 1;
+      break;
+    }
+  }
+  release(&ptable.lock);
+  return result;
+}
 
 #endif
 
@@ -88,18 +100,8 @@ int should_preempt(int priority);
 
 #ifdef SCHEDULER_MLFQ
 
-#define MAX_PROC_COUNT (int)1e4
-struct proc *mlqf_queue[PQ_COUNT][MAX_PROC_COUNT];
-
-struct proc *mlfq_peek_front(int qIdx);
-struct proc *mlfq_pop_front(int qIdx);
-void mlfq_push_back(int qIdx, struct proc *p);
-void mlfq_delete_idx(int qIdx, int idx);
-void mlfq_decrease_priority(struct proc *queueIdx, int retain);
-void mlfq_increase_priority(struct proc *queueIdx);
-int mlfq_process_index(struct proc *currp);
-int mlfq_size(int qIdx);
-void mlfq_update();
+#define DEFAULT_PRIORITY 0
+#define AGING_THRESHOLD 128
 
 #endif
 
@@ -107,9 +109,14 @@ void mlfq_update();
 
 #ifdef SCHEDULER_FCFS
 
+#define DEFAULT_PRIORITY 0
+
 #endif
 
 // Round Robin Scheduling
 
 #ifdef SCHEDULER_RR
+
+#define DEFAULT_PRIORITY 0
+
 #endif

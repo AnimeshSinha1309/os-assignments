@@ -52,9 +52,9 @@ trap(struct trapframe *tf)
       acquire(&tickslock);
       ticks++;
       wakeup(&ticks);
+      release(&tickslock);
       if (myproc() && myproc()->state == RUNNING)
         myproc()->running_time++;
-      release(&tickslock);
     }
     lapiceoi();
     break;
@@ -117,6 +117,15 @@ trap(struct trapframe *tf)
   if (myproc() && myproc()->state == RUNNING &&
       tf->trapno == T_IRQ0 + IRQ_TIMER) {
     if (should_preempt(myproc()->priority)) {
+      yield();
+    }
+  }
+#endif
+
+#ifdef SCHEDULER_MLFQ
+  if (myproc() && myproc()->state == RUNNING &&
+      tf->trapno == T_IRQ0 + IRQ_TIMER) {
+    if ((ticks - myproc()->last_enqueue_ticks) > (1 << myproc()->priority)) {
       yield();
     }
   }
