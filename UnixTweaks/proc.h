@@ -69,17 +69,12 @@ struct proc {
 //   expandable heap
 
 
-// Select the Scheduler you want
-#undef SCHEDULER_FCFS
-#undef SCHEDULER_RR
-#undef SCHEDULER_PBS
-#define SCHEDULER_MLFQ
-
 // Priority Based Scheduling
 
 #ifdef SCHEDULER_PBS
 
 #define DEFAULT_PRIORITY 60
+#define PBS_RR_WAIT_TIME 32
 
 int should_preempt(int priority) {
   int result = 0;

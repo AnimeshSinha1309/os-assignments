@@ -109,25 +109,24 @@ trap(struct trapframe *tf)
   // Force process to give up CPU on clock tick.
   // If interrupts were on while locks held, would need to check nlock.
   if(myproc() && myproc()->state == RUNNING &&
-     tf->trapno == T_IRQ0+IRQ_TIMER)
+     tf->trapno == T_IRQ0 + IRQ_TIMER)
     yield();
 #endif
 
 #ifdef SCHEDULER_PBS
   if (myproc() && myproc()->state == RUNNING &&
-      tf->trapno == T_IRQ0 + IRQ_TIMER) {
-    if (should_preempt(myproc()->priority)) {
-      yield();
-    }
+      ticks - myproc()->last_enqueue_ticks > PBS_RR_WAIT_TIME) {
+    yield();
+  }
+  if (should_preempt(myproc()->priority)) {
+    yield();
   }
 #endif
 
 #ifdef SCHEDULER_MLFQ
-  if (myproc() && myproc()->state == RUNNING &&
-      tf->trapno == T_IRQ0 + IRQ_TIMER) {
-    if ((ticks - myproc()->last_enqueue_ticks) > (1 << myproc()->priority)) {
-      yield();
-    }
+  if ((ticks - myproc()->last_enqueue_ticks) > (1 << myproc()->priority)) {
+    if (myproc()->priority < 4) myproc()->priority++;
+    yield();
   }
 #endif
 

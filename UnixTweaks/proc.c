@@ -118,6 +118,7 @@ found:
   p->end_time = -1;
   p->last_enqueue_ticks = -1;
   p->num_run = 0;
+  for (int i = 0; i < 5; i++) p->q_ticks[i] = 0;
   p->priority = DEFAULT_PRIORITY;
   return p;
 }
@@ -427,7 +428,7 @@ scheduler(void)
     acquire(&ptable.lock);
 
 #ifdef SCHEDULER_RR
-    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
       if(p->state != RUNNABLE)
         continue;
 
@@ -437,6 +438,7 @@ scheduler(void)
       c->proc = p;
       switchuvm(p);
       p->state = RUNNING;
+      p->num_run++;
 
       swtch(&(c->scheduler), p->context);
       switchkvm();
@@ -457,7 +459,9 @@ scheduler(void)
 
     if (first_process != 0) {
       // Switch the CPU process to the selected one
+      best_process->num_run = 1;
       c->proc = first_process;
+      first_process->run = 1;
       switchuvm(first_process);
       first_process->state = RUNNING;
       swtch(&(c->scheduler), first_process->context);
@@ -470,12 +474,15 @@ scheduler(void)
     struct proc *best_process = 0;
     for (p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
       if (p->state == RUNNABLE) {
-        if (best_process == 0 || p->priority < best_process->priority)
+        if (best_process == 0 || p->priority < best_process->priority ||
+            (p->priority == best_process->priority && p->last_enqueue_ticks < best_process->last_enqueue_ticks))
           best_process = p;
       }
     }
 
     if (best_process != 0) {
+      best_process->last_enqueue_ticks = ticks;
+      best_process->num_run++;
       c->proc = best_process;
       switchuvm(best_process);
       best_process->state = RUNNING;
@@ -503,7 +510,10 @@ scheduler(void)
     }
     // Start executing it
     if (best_process != 0) {
-      p->last_enqueue_ticks = ticks;
+      best_process->last_enqueue_ticks = ticks;
+      best_process->num_run++;
+      best_process->q_ticks[p->priority] += (1 << p->priority);
+      best_process->cur_q = p->priority;
       c->proc = best_process;
       switchuvm(best_process);
       best_process->state = RUNNING;

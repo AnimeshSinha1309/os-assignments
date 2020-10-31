@@ -17,6 +17,19 @@ extern char end[]; // first address after kernel loaded from ELF file
 int
 main(void)
 {
+#ifdef SCHEDULER_RR
+  cprintf("Using Round Robin Scheduler.\n");
+#endif
+#ifdef SCHEDULER_FCFS
+  cprintf("Using First Come First Serve Scheduler.\n");
+#endif
+#ifdef SCHEDULER_PBS
+  cprintf("Using Priority Based Scheduler.\n");
+#endif
+#ifdef SCHEDULER_MLFQ
+  cprintf("Using Multi Level Feedback Queue Scheduler.\n");
+#endif
+
   kinit1(end, P2V(4*1024*1024)); // phys page allocator
   kvmalloc();      // kernel page table
   mpinit();        // detect other processors
