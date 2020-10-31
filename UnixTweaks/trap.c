@@ -114,19 +114,25 @@ trap(struct trapframe *tf)
 #endif
 
 #ifdef SCHEDULER_PBS
-  if (myproc() && myproc()->state == RUNNING &&
-      ticks - myproc()->last_enqueue_ticks > PBS_RR_WAIT_TIME) {
-    yield();
-  }
-  if (should_preempt(myproc()->priority)) {
-    yield();
+  if(myproc() && myproc()->state == RUNNING &&
+     tf->trapno == T_IRQ0 + IRQ_TIMER) {
+    if (myproc() && myproc()->state == RUNNING &&
+        ticks - myproc()->last_enqueue_ticks > PBS_RR_WAIT_TIME) {
+      yield();
+    }
+    if (should_preempt(myproc()->priority)) {
+      yield();
+    }
   }
 #endif
 
 #ifdef SCHEDULER_MLFQ
-  if ((ticks - myproc()->last_enqueue_ticks) > (1 << myproc()->priority)) {
-    if (myproc()->priority < 4) myproc()->priority++;
-    yield();
+  if(myproc() && myproc()->state == RUNNING &&
+     tf->trapno == T_IRQ0 + IRQ_TIMER) {
+    if ((ticks - myproc()->last_enqueue_ticks) > (1 << myproc()->priority)) {
+      if (myproc()->priority < 4) myproc()->priority++;
+      yield();
+    }
   }
 #endif
 

@@ -76,18 +76,7 @@ struct proc {
 #define DEFAULT_PRIORITY 60
 #define PBS_RR_WAIT_TIME 32
 
-int should_preempt(int priority) {
-  int result = 0;
-  acquire(&ptable.lock);
-  for (struct proc *p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
-    if (p->state == RUNNABLE && p->priority < priority) {
-      result = 1;
-      break;
-    }
-  }
-  release(&ptable.lock);
-  return result;
-}
+int should_preempt(int priority);
 
 #endif
 

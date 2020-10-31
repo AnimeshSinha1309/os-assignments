@@ -397,7 +397,7 @@ pslist(void)
             "n_run", "cur_q", "q1", "q2", "q3", "q4", "q5");
     for(struct proc *p = ptable.proc; p < &ptable.proc[NPROC]; p++){
         if (p->state == UNUSED) continue;
-        cprintf("%d\t%d\t\t\t%s\t\t%d\t\t%d\t\t\t%d\t\t%d\t\t%d\t%d\t%d\t%d\t%d\n",
+        cprintf("%d\t%d\t\t%s\t\t%d\t%d\t\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n",
                 p->pid, p->priority, states[p->state],
                 p->running_time, ticks - p->start_time - p->running_time,
                 p->n_run, p->cur_q,
@@ -497,6 +497,7 @@ scheduler(void)
     for (p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
       if (p->state == RUNNABLE && p->priority != 0 && ticks - p->last_enqueue_ticks > AGING_THRESHOLD) {
         p->priority--;
+        p->last_enqueue_ticks = ticks;
       }
     }
     // Select the best process
@@ -671,6 +672,24 @@ kill(int pid)
   return -1;
 }
 
+int
+set_priority(int priority, int pid)
+{
+  struct proc *p;
+  acquire(&ptable.lock);
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    if(p->pid == pid){
+      int old_priority = p->priority;
+      p->priority = priority;
+      release(&ptable.lock);
+      return old_priority;
+    }
+  }
+  release(&ptable.lock);
+  return -1;
+}
+
+
 //PAGEBREAK: 36
 // Print a process listing to console.  For debugging.
 // Runs when user types ^P on console.
@@ -707,3 +726,21 @@ procdump(void)
     cprintf("\n");
   }
 }
+
+
+#ifdef SCHEDULER_PBS
+
+int should_preempt(int priority) {
+  int result = 0;
+  acquire(&ptable.lock);
+  for (struct proc *p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
+    if (p->state == RUNNABLE && p->priority < priority) {
+      result = 1;
+      break;
+    }
+  }
+  release(&ptable.lock);
+  return result;
+}
+
+#endif
