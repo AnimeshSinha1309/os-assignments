@@ -6,6 +6,7 @@
 #include "x86.h"
 #include "proc.h"
 #include "spinlock.h"
+#include "schedulers.h"
 
 struct {
   struct spinlock lock;
@@ -112,9 +113,12 @@ found:
   memset(p->context, 0, sizeof *p->context);
   p->context->eip = (uint)forkret;
 
+  // CHANGES: Add my own initializations
   p->start_time = ticks;
   p->running_time = 0;
-  p->end_time = 0;
+  p->end_time = -1;
+  p->last_enqueue_ticks = -1;
+  p->num_run = 0;
   return p;
 }
 
@@ -419,6 +423,8 @@ scheduler(void)
 
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
+
+#ifdef SCHEDULER_RR
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
       if(p->state != RUNNABLE)
         continue;
@@ -437,6 +443,31 @@ scheduler(void)
       // It should have changed its p->state before coming back.
       c->proc = 0;
     }
+#endif
+
+#ifdef SCHEDULER_FCFS
+    struct proc *first_process = 0;
+    for (p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
+      if (p->state != RUNNABLE) continue;
+      if (first_process == 0 || p->start_time < first_process->start_time)
+        first_process = p;
+    }
+
+    if (first_process != 0) {
+      // Switch the CPU process to the selected one
+      c->proc = first_process;
+      switchuvm(first_process);
+      if (first_process->state != RUNNABLE) panic("Status not RUNNABLE in process selected by FCFS\n");
+
+      first_process->state = RUNNING;
+      swtch(&(c->scheduler), first_process->context);
+      switchkvm();
+      // Process is done running for now.
+      // It should have changed its p->state before coming back.
+      c->proc = 0;
+    }
+#endif
+
     release(&ptable.lock);
 
   }

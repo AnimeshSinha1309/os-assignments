@@ -1,4 +1,8 @@
-#define SCHEDULER_MLFQ
+// Select the Scheduler you want
+#define SCHEDULER_FCFS
+#undef SCHEDULER_RR
+#undef SCHEDULER_PBS
+#undef SCHEDULER_MLFQ
 
 // Priority Based Scheduling
 
@@ -27,10 +31,13 @@ void mlfq_update();
 
 #endif
 
-// First comeScheduling
+// First Come First Serve Scheduling
 
 #ifdef SCHEDULER_FCFS
 
 #endif
 
+// Round Robin Scheduling
 
+#ifdef SCHEDULER_RR
+#endif
