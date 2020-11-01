@@ -37,3 +37,27 @@ A user process can hog the CPU by voluntarily leaving the queue just before it r
 out of time and then getting pushed back in the same queue, thereby spending all
 it's time in the highest priority queue and blocking other processes which are in
 lower priority queues.
+
+## Relative Performance
+
+On the task of 4 competing processes with rare I/O statements that all run very long,
+following are the performance metrics:
+* RR: Running time - 3206; Waiting Time - 3201
+* FCFS: Running time - 3178; Waiting Time - 0
+* MLFQ: Running time - 3310; Waiting Time - 1757
+* PBS: Running time - 3490; Waiting Time - 3545
+
+We see that here FCFS performs the best (over the entire process, the one which has
+all the forks), since it wastes no time switching. Of course, it's worse because it
+will keep the other forks waiting thereby hanging the I/O of the computer.
+PBS is the slowest by performing the maximum number of switches and preemption.
+RR is a little faster, MLFQ is the best, not wasting a lot of time in switching,
+round-robins slowly in the slow processes while staying free for the high priority
+ones. Therefore MLFQ seems to be the best, and FCFS is the fastest.
+
+## Note on the plots
+
+I have shown a short term and long term plot, the plotting data is also attached.
+The long term plot ages very slowly, and only oscillates between queue 3 and 4,
+because the aging time is high. If we have a lower AGING_THRESHOLD, then osciallation
+will include queue 2.

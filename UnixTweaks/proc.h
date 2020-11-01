@@ -67,6 +67,8 @@ struct proc {
 //   expandable heap
 
 
+#undef TOOLS_PLOTTING
+
 // Priority Based Scheduling
 
 #ifdef SCHEDULER_PBS
@@ -83,7 +85,7 @@ int should_preempt(int priority);
 #ifdef SCHEDULER_MLFQ
 
 #define DEFAULT_PRIORITY 0
-#define AGING_THRESHOLD 128
+#define AGING_THRESHOLD 14
 
 #endif
 

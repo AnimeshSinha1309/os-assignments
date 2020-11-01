@@ -131,6 +131,7 @@ trap(struct trapframe *tf)
      tf->trapno == T_IRQ0 + IRQ_TIMER) {
     if ((ticks - myproc()->last_enqueue_ticks) > (1 << myproc()->priority)) {
       if (myproc()->priority < 4) myproc()->priority++;
+      myproc()->last_enqueue_ticks = ticks;
       yield();
     }
   }

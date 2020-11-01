@@ -467,9 +467,8 @@ scheduler(void)
 
     if (first_process != 0) {
       // Switch the CPU process to the selected one
-      best_process->n_run = 1;
       c->proc = first_process;
-      first_process->run = 1;
+      first_process->n_run = 1;
       switchuvm(first_process);
       first_process->state = RUNNING;
       swtch(&(c->scheduler), first_process->context);
@@ -521,8 +520,12 @@ scheduler(void)
     if (best_process != 0) {
       best_process->last_enqueue_ticks = ticks;
       best_process->n_run++;
-      best_process->q_ticks[p->priority] += (1 << p->priority);
+      best_process->q_ticks[best_process->priority] += (1 << best_process->priority);
       c->proc = best_process;
+#ifdef TOOLS_PLOTTING
+      cprintf("%d, %d, %d, %d, %d\n",
+              best_process->pid, best_process->priority, best_process->n_run, best_process->running_time, ticks);
+#endif
       switchuvm(best_process);
       best_process->state = RUNNING;
       swtch(&(c->scheduler), best_process->context);
