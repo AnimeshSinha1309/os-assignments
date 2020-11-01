@@ -117,7 +117,7 @@ found:
   p->running_time = 0;
   p->end_time = -1;
   p->last_enqueue_ticks = -1;
-  p->num_run = 0;
+  p->n_run = 0;
   for (int i = 0; i < 5; i++) p->q_ticks[i] = 0;
   p->priority = DEFAULT_PRIORITY;
   return p;
@@ -352,6 +352,7 @@ waitx(int* wtime, int* rtime)
                 p->kstack = 0;
                 freevm(p->pgdir);
                 p->pid = 0;
+                p->n_run = 0;
                 p->parent = 0;
                 p->name[0] = 0;
                 p->killed = 0;
@@ -397,10 +398,17 @@ pslist(void)
             "n_run", "cur_q", "q1", "q2", "q3", "q4", "q5");
     for(struct proc *p = ptable.proc; p < &ptable.proc[NPROC]; p++){
         if (p->state == UNUSED) continue;
+        int queue;
+#ifdef SCHEDULER_MLFQ
+        queue = p->priority;
+#endif
+#ifndef SCHEDULER_MLFQ
+        queue = 0;
+#endif
         cprintf("%d\t%d\t\t%s\t\t%d\t%d\t\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n",
                 p->pid, p->priority, states[p->state],
                 p->running_time, ticks - p->start_time - p->running_time,
-                p->n_run, p->cur_q,
+                p->n_run, queue,
                 p->q_ticks[0], p->q_ticks[1], p->q_ticks[2], p->q_ticks[3], p->q_ticks[4]);
     }
 }
@@ -432,13 +440,13 @@ scheduler(void)
       if(p->state != RUNNABLE)
         continue;
 
-      // Switch to chosen process.  It is the process's job
+      // Switch to chosen process. It is the process's job
       // to release ptable.lock and then reacquire it
       // before jumping back to us.
       c->proc = p;
       switchuvm(p);
       p->state = RUNNING;
-      p->num_run++;
+      p->n_run++;
 
       swtch(&(c->scheduler), p->context);
       switchkvm();
@@ -459,7 +467,7 @@ scheduler(void)
 
     if (first_process != 0) {
       // Switch the CPU process to the selected one
-      best_process->num_run = 1;
+      best_process->n_run = 1;
       c->proc = first_process;
       first_process->run = 1;
       switchuvm(first_process);
@@ -482,7 +490,7 @@ scheduler(void)
 
     if (best_process != 0) {
       best_process->last_enqueue_ticks = ticks;
-      best_process->num_run++;
+      best_process->n_run++;
       c->proc = best_process;
       switchuvm(best_process);
       best_process->state = RUNNING;
@@ -512,9 +520,8 @@ scheduler(void)
     // Start executing it
     if (best_process != 0) {
       best_process->last_enqueue_ticks = ticks;
-      best_process->num_run++;
+      best_process->n_run++;
       best_process->q_ticks[p->priority] += (1 << p->priority);
-      best_process->cur_q = p->priority;
       c->proc = best_process;
       switchuvm(best_process);
       best_process->state = RUNNING;
