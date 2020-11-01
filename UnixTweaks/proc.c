@@ -116,7 +116,7 @@ found:
   p->start_time = ticks;
   p->running_time = 0;
   p->end_time = -1;
-  p->last_enqueue_ticks = -1;
+  p->last_enqueue_ticks = ticks;
   p->n_run = 0;
   for (int i = 0; i < 5; i++) p->q_ticks[i] = 0;
   p->priority = DEFAULT_PRIORITY;
@@ -393,8 +393,8 @@ pslist(void)
             [ZOMBIE]    "zombie"
     };
 
-    cprintf("%s\t%s\t%s\t\t%s\t%s\t\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
-            "pid", "priority", "status", "r_time", "w_time",
+    cprintf("%s\t%s\t%s\t\t%s\t%s\t%s\t\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
+            "pid", "priority", "status", "r_time", "w_time", "qw_time",
             "n_run", "cur_q", "q1", "q2", "q3", "q4", "q5");
     for(struct proc *p = ptable.proc; p < &ptable.proc[NPROC]; p++){
         if (p->state == UNUSED) continue;
@@ -405,10 +405,10 @@ pslist(void)
 #ifndef SCHEDULER_MLFQ
         queue = 0;
 #endif
-        cprintf("%d\t%d\t\t%s\t\t%d\t%d\t\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n",
+        cprintf("%d\t%d\t\t%s\t\t%d\t%d\t%d\t\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n",
                 p->pid, p->priority, states[p->state],
                 p->running_time, ticks - p->start_time - p->running_time,
-                p->n_run, queue,
+                ticks - p->last_enqueue_ticks, p->n_run, queue,
                 p->q_ticks[0], p->q_ticks[1], p->q_ticks[2], p->q_ticks[3], p->q_ticks[4]);
     }
 }
