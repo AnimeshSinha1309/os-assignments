@@ -53,11 +53,12 @@ void write_file(char *filename, int sockfd) {
   printf(COLOR_GREEN"LOG: Writing to file - %s\n"COLOR_RESTORE, filename_w);
   for (int i = 0; i <= size / SIZE; i++) {
     int n = recv(sockfd, buffer, SIZE, 0);
-    printf("LOG: Reading Bytes %d.\n", n);
+    printf("Download Progress %.2f%%.\r", i * SIZE * 100.0 / (double)size);
     if (n <= 0) continue;
     fprintf(fp, "%s", buffer);
     bzero(buffer, SIZE);
   }
+  printf("Download Progress 100%%.\n");
   fclose(fp);
   printf(COLOR_BLUE"LOG: File has been received - %s\n"COLOR_RESTORE, filename_w);
   free(filename_w);
@@ -97,7 +98,7 @@ int main() {
 
     char* buffer = (char*) calloc(1, 1000);
     char* filename = await_input(buffer);
-    printf("LOG: File being requested - %s", filename);
+    printf("LOG: File being requested - %s\n", filename);
     if (connect(sockfd, (struct sockaddr *) &server_addr, sizeof(server_addr)) == -1) {
       printf(COLOR_RED"Error in socket"COLOR_RESTORE);
       exit(1);
