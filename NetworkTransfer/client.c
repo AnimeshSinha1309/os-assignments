@@ -7,7 +7,7 @@
 #include <arpa/inet.h>
 
 #define SIZE 1024
-#define CONFIG_PORT 8080
+#define CONFIG_PORT 8081
 
 #define COLOR_RESTORE "\x1B[0m"
 #define COLOR_RED "\x1B[31m"
@@ -22,7 +22,7 @@ char* await_input(char* com_value) {
   if (strncmp(com_value, "get ", 4) == 0) {
     return com_value + 4;
   } else if (strcmp(com_value, "exit") == 0) {
-    printf(COLOR_GREEN "LOG: Exitting terminal. Bye bye.\n" COLOR_RESTORE);
+    printf(COLOR_GREEN "LOG: Exiting terminal. Bye bye.\n" COLOR_RESTORE);
     exit(0);
   } else {
     printf(COLOR_RED "ERROR: Invalid command\n" COLOR_RESTORE);
@@ -32,7 +32,7 @@ char* await_input(char* com_value) {
 
 void write_file(char *filename, int sockfd) {
   char buffer[SIZE];
-  char* filename_w = calloc(sizeof(char), 1000);
+  char* filename_w = (char*) calloc(sizeof(char), 1000);
   strcat(filename_w, filename);
   strcat(filename_w, ".ani_downloaded");
 
@@ -42,6 +42,12 @@ void write_file(char *filename, int sockfd) {
   }
   long size = strtol(buffer, NULL, 10);
   printf(COLOR_BLUE"Size of File is %ld.\n"COLOR_RESTORE, size);
+
+  if (size < 0) {
+    printf(COLOR_RED"The requested file does not exist on the server.\n"COLOR_RESTORE);
+    free(filename_w);
+    return;
+  }
 
   FILE *fp = fopen(filename_w, "w");
   printf(COLOR_GREEN"LOG: Writing to file - %s\n"COLOR_RESTORE, filename_w);
@@ -54,11 +60,13 @@ void write_file(char *filename, int sockfd) {
   }
   fclose(fp);
   printf(COLOR_BLUE"LOG: File has been received - %s\n"COLOR_RESTORE, filename_w);
+  free(filename_w);
 }
 
 void send_filename(char *filename, int sockfd) {
-  char data[SIZE] = {0};
-  if (send(sockfd, filename, sizeof(filename), 0) == -1) {
+  char* data = (char *) calloc(SIZE, sizeof(char));
+  strcpy(data, filename);
+  if (send(sockfd, filename, SIZE, 0) == -1) {
     perror(COLOR_RED"ERROR: Could not send filename.\n"COLOR_RESTORE);
     exit(1);
   }
@@ -89,7 +97,7 @@ int main() {
 
     char* buffer = (char*) calloc(1, 1000);
     char* filename = await_input(buffer);
-
+    printf("LOG: File being requested - %s", filename);
     if (connect(sockfd, (struct sockaddr *) &server_addr, sizeof(server_addr)) == -1) {
       printf(COLOR_RED"Error in socket"COLOR_RESTORE);
       exit(1);

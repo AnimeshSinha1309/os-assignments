@@ -6,7 +6,7 @@
 #include <arpa/inet.h>
 
 #define BUFFER_SIZE 1024
-#define CONFIG_PORT 8080
+#define CONFIG_PORT 8081
 
 #define COLOR_RESTORE "\x1B[0m"
 #define COLOR_RED "\x1B[31m"
@@ -16,7 +16,13 @@
 
 void send_meta(FILE *fp, int sockfd){
   char* data = (char *)calloc(sizeof(char), BUFFER_SIZE);
-  sprintf(data, "%d", 24);
+  int size = -100000;
+  if (fp != NULL) {
+    fseek(fp, 0L, SEEK_END);
+    size = (int)ftell(fp);
+    rewind(fp);
+  }
+  sprintf(data, "%d", size);
   if (send(sockfd, data, BUFFER_SIZE, 0) == -1){
     printf(COLOR_RED"ERROR: Could not send file."COLOR_RESTORE);
     exit(1);
@@ -27,6 +33,7 @@ void send_meta(FILE *fp, int sockfd){
 
 void send_file(FILE *fp, int sockfd){
   send_meta(fp, sockfd);
+  if (fp == NULL) return;
   char data[BUFFER_SIZE] = {0};
   while (fgets(data, BUFFER_SIZE, fp) != NULL){
     if (send(sockfd, data, sizeof(data), 0) == -1){
@@ -42,7 +49,7 @@ void get_filename(int sockfd){
   char *buffer = (char *)calloc(BUFFER_SIZE,sizeof(char));
   char *filename = (char *)calloc(BUFFER_SIZE,sizeof(char));
   recv(sockfd, buffer, BUFFER_SIZE, 0);
-  strcpy(filename,buffer);
+  strcpy(filename, buffer);
   bzero(buffer, BUFFER_SIZE);
   printf(COLOR_BLUE"DATA: The filename is : %s\n"COLOR_RESTORE, filename);
 
@@ -50,8 +57,7 @@ void get_filename(int sockfd){
   FILE *fp;
   fp = fopen(filename, "r");
   if (fp == NULL) {
-    printf(COLOR_RED"ERROR: Could not read in file."COLOR_RESTORE);
-    exit(1);
+    printf(COLOR_RED"ERROR: File not found.\n"COLOR_RESTORE);
   }
   printf(COLOR_GREEN"LOG: Sending file %s\n"COLOR_RESTORE, filename);
   send_file(fp, sockfd);
