@@ -5,39 +5,52 @@
 #include <string.h>
 #include <arpa/inet.h>
 
-#define SIZE 10240
-#define CONFIG_PORT 8000
+#define BUFFER_SIZE 1024
+#define CONFIG_PORT 8080
 
 #define COLOR_RESTORE "\x1B[0m"
 #define COLOR_RED "\x1B[31m"
 #define COLOR_GREEN "\x1B[32m"
 #define COLOR_BLUE "\x1b[34m"
 
+
+void send_meta(FILE *fp, int sockfd){
+  char* data = (char *)calloc(sizeof(char), BUFFER_SIZE);
+  sprintf(data, "%d", 24);
+  if (send(sockfd, data, BUFFER_SIZE, 0) == -1){
+    printf(COLOR_RED"ERROR: Could not send file."COLOR_RESTORE);
+    exit(1);
+  }
+  bzero(data, BUFFER_SIZE);
+  free(data);
+}
+
 void send_file(FILE *fp, int sockfd){
-  char data[SIZE] = {0};
-  while (fgets(data, SIZE, fp) != NULL){
+  send_meta(fp, sockfd);
+  char data[BUFFER_SIZE] = {0};
+  while (fgets(data, BUFFER_SIZE, fp) != NULL){
     if (send(sockfd, data, sizeof(data), 0) == -1){
       perror("[-]Error in sending file.");
       exit(1);
     }
-    bzero(data, SIZE);
+    bzero(data, BUFFER_SIZE);
   }
 }
 
 void get_filename(int sockfd){
   // Get the filename
-  char *buffer = (char *)calloc(SIZE,sizeof(char));
-  char *filename = (char *)calloc(SIZE,sizeof(char));
-  recv(sockfd, buffer, SIZE, 0);
+  char *buffer = (char *)calloc(BUFFER_SIZE,sizeof(char));
+  char *filename = (char *)calloc(BUFFER_SIZE,sizeof(char));
+  recv(sockfd, buffer, BUFFER_SIZE, 0);
   strcpy(filename,buffer);
-  bzero(buffer, SIZE);
+  bzero(buffer, BUFFER_SIZE);
   printf(COLOR_BLUE"DATA: The filename is : %s\n"COLOR_RESTORE, filename);
 
   // Actually sending the file
   FILE *fp;
   fp = fopen(filename, "r");
-  if (fp == NULL){
-    printf(COLOR_RED"Error in reading file."COLOR_RESTORE);
+  if (fp == NULL) {
+    printf(COLOR_RED"ERROR: Could not read in file."COLOR_RESTORE);
     exit(1);
   }
   printf(COLOR_GREEN"LOG: Sending file %s\n"COLOR_RESTORE, filename);
@@ -81,6 +94,6 @@ int main(){
     addr_size = sizeof(new_addr);
     new_sock = accept(sockfd, (struct sockaddr *)&new_addr, &addr_size);
     get_filename(new_sock);
-    printf("[+]Data sent successfully.\n");
+    printf("DATA: Sent Successfully.\n");
   }
 }

@@ -7,24 +7,48 @@
 #include <arpa/inet.h>
 
 #define SIZE 1024
-#define CONFIG_PORT 8000
+#define CONFIG_PORT 8080
 
 #define COLOR_RESTORE "\x1B[0m"
 #define COLOR_RED "\x1B[31m"
 #define COLOR_GREEN "\x1B[32m"
 #define COLOR_BLUE "\x1b[34m"
 
+char* await_input(char* com_value) {
+  printf("client> ");
+  int com_length = 0;
+  while ((com_value[com_length++] = (char)getchar()) != '\n');
+  com_value[com_length - 1] = 0;
+  if (strncmp(com_value, "get ", 4) == 0) {
+    return com_value + 4;
+  } else if (strcmp(com_value, "exit") == 0) {
+    printf(COLOR_GREEN "LOG: Exitting terminal. Bye bye.\n" COLOR_RESTORE);
+    exit(0);
+  } else {
+    printf(COLOR_RED "ERROR: Invalid command\n" COLOR_RESTORE);
+    return NULL;
+  }
+}
+
 void write_file(char *filename, int sockfd) {
   char buffer[SIZE];
   char* filename_w = calloc(sizeof(char), 1000);
   strcat(filename_w, filename);
   strcat(filename_w, ".ani_downloaded");
+
+  // Get the size of the file
+  if (recv(sockfd, buffer, SIZE, 0) == 0) {
+    printf(COLOR_RED"ERROR: Could not receive file-size.\n"COLOR_RESTORE);
+  }
+  long size = strtol(buffer, NULL, 10);
+  printf(COLOR_BLUE"Size of File is %ld.\n"COLOR_RESTORE, size);
+
   FILE *fp = fopen(filename_w, "w");
   printf(COLOR_GREEN"LOG: Writing to file - %s\n"COLOR_RESTORE, filename_w);
-  for (int i = 0; i < 8; i++) {
+  for (int i = 0; i <= size / SIZE; i++) {
     int n = recv(sockfd, buffer, SIZE, 0);
     printf("LOG: Reading Bytes %d.\n", n);
-    if (n <= 0) break;
+    if (n <= 0) continue;
     fprintf(fp, "%s", buffer);
     bzero(buffer, SIZE);
   }
@@ -49,29 +73,33 @@ int main() {
 
   struct sockaddr_in server_addr;
 
-  int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-  if (sockfd < 0){
-    printf(COLOR_RED"ERROR: Could not open socket.\n"COLOR_RESTORE);
-    exit(1);
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "EndlessLoop"
+  while (1) {
+    int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    if (sockfd < 0) {
+      printf(COLOR_RED"ERROR: Could not open socket.\n"COLOR_RESTORE);
+      exit(1);
+    }
+    printf(COLOR_GREEN"LOG: Server socket created successfully.\n"COLOR_RESTORE);
+
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = port;
+    server_addr.sin_addr.s_addr = inet_addr(ip);
+
+    char* buffer = (char*) calloc(1, 1000);
+    char* filename = await_input(buffer);
+
+    if (connect(sockfd, (struct sockaddr *) &server_addr, sizeof(server_addr)) == -1) {
+      printf(COLOR_RED"Error in socket"COLOR_RESTORE);
+      exit(1);
+    }
+    printf(COLOR_GREEN"LOG: Connected to Server.\n"COLOR_RESTORE);
+
+    send_filename(filename, sockfd);
+    printf(COLOR_GREEN"LOG: File received successfully.\n"COLOR_RESTORE);
+    printf(COLOR_GREEN"LOG: Closing the connection.\n"COLOR_RESTORE);
+    close(sockfd);
   }
-  printf(COLOR_GREEN"LOG: Server socket created successfully.\n"COLOR_RESTORE);
-
-  server_addr.sin_family = AF_INET;
-  server_addr.sin_port = port;
-  server_addr.sin_addr.s_addr = inet_addr(ip);
-
-  if (connect(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr)) == -1) {
-    printf(COLOR_RED"Error in socket"COLOR_RESTORE);
-    exit(1);
-  }
-  printf(COLOR_GREEN"LOG: Connected to Server.\n"COLOR_RESTORE);
-
-  // Setup loop here
-  send_filename("send.txt", sockfd);
-  printf(COLOR_GREEN"LOG: File received successfully.\n"COLOR_RESTORE);
-
-  printf(COLOR_GREEN"LOG: Closing the connection.\n"COLOR_RESTORE);
-  close(sockfd);
-
-  return 0;
+#pragma clang diagnostic pop
 }
